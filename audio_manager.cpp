@@ -16,7 +16,7 @@ namespace MusicLib
         
     }
 
-    AudioManager::AudioManager(unsigned int sample_rate, unsigned int buffer_size, PaStreamCallback& callback, AudioData& callback_data)
+    AudioManagerPortAudio::AudioManagerPortAudio(unsigned int sample_rate, unsigned int buffer_size, PaStreamCallback& callback, PortAudioData& callback_data)
     : m_sample_rate{sample_rate}
     , m_buffer_size{buffer_size}
     , m_time_element{1.0f / buffer_size}
@@ -29,7 +29,7 @@ namespace MusicLib
         manage_error(err);
     }
 
-    AudioManager::~AudioManager()
+    AudioManagerPortAudio::~AudioManagerPortAudio() noexcept
     {
         PaError err;
         err = Pa_CloseStream(m_stream.release());
@@ -38,7 +38,7 @@ namespace MusicLib
         manage_error(err);
     }
 
-    void AudioManager::play()
+    void AudioManagerPortAudio::play()
     {
         PaError err;
 
@@ -53,18 +53,18 @@ namespace MusicLib
         manage_error(err);
     }
 
-    void AudioManager::stop()
+    void AudioManagerPortAudio::stop()
     {
         PaError err = Pa_StopStream(m_stream.get());
         manage_error(err);
     }
 
-    unsigned int AudioManager::sample_rate()
+    unsigned int AudioManagerPortAudio::sample_rate()
     {
         return m_sample_rate;
     }
 
-    float AudioManager::time_element()
+    float AudioManagerPortAudio::time_element()
     {
         return m_time_element;
     }

@@ -8,6 +8,11 @@ namespace MusicLib
 
     }
 
+    std::shared_ptr<Envelope> EnvelopeZero::clone() const
+    {
+        return std::make_shared<EnvelopeZero>(*this);
+    }
+
     void EnvelopeZero::trig(bool is_on)
     {
         m_is_on = is_on;
@@ -28,6 +33,8 @@ namespace MusicLib
         return m_is_on;
     }
 
+    void EnvelopeZero::set_retrigger(bool is_retrigger [[maybe_unused]])
+    {}
 
     EnvelopeADSR::EnvelopeADSR(float attack, float decay, float sustain, float release, bool is_retrigger)
     : m_level{0}
@@ -40,6 +47,11 @@ namespace MusicLib
     , m_is_retrigger{is_retrigger}
     {
 
+    }
+
+    std::shared_ptr<Envelope> EnvelopeADSR::clone() const
+    {
+        return std::make_shared<EnvelopeADSR>(*this);
     }
 
     float EnvelopeADSR::attack() const

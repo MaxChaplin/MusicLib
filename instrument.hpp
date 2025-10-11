@@ -20,8 +20,9 @@ namespace MusicLib
 
         float process(float sample_time);
 
-        void note_on(size_t voice_num, float freq);
-        void note_off(size_t voice_num);
+        void note_on(unsigned int voice_num, float freq);
+        void note_on(unsigned int voice_num);
+        void note_off(unsigned int voice_num);
 
         void vol(float vol);
 
@@ -31,25 +32,7 @@ namespace MusicLib
         std::vector<std::shared_ptr<Voice>> m_voices;
         float m_vol;
         bool m_retrigger;
-
-    };
-
-    class InstrumentManager
-    {
-    public:
-        explicit InstrumentManager(size_t buffer_size);
-        ~InstrumentManager() noexcept = default;
-
-        Instrument& instrument(size_t num);
-
-        void add_instrument(Instrument& instrument);
-        float process(float time_element);
-
-    private:
-        std::vector<Instrument> m_instruments;
-        std::vector<float> m_buffer;
-        size_t m_buffer_cursor;
     };
 }
 
-#endif // _INSTRUMENT_H_
+#endif // INSTRUMENT_H_

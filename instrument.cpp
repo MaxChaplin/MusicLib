@@ -37,7 +37,7 @@ namespace MusicLib
         return sample;
     }
 
-    void Instrument::note_on(size_t voice_num, float freq)
+    void Instrument::note_on(unsigned int voice_num, float freq)
     {
         if (voice_num >= m_voices.size())
         {
@@ -55,7 +55,12 @@ namespace MusicLib
         }
     }
 
-    void Instrument::note_off(size_t voice_num)
+    void Instrument::note_on(unsigned int voice_num)
+    {
+        note_on(voice_num, m_voices[voice_num]->freq());
+    }
+
+    void Instrument::note_off(unsigned int voice_num)
     {
         m_voices[voice_num]->note_off();
     }
@@ -68,33 +73,5 @@ namespace MusicLib
     void Instrument::retrigger(bool retrigger)
     {
         m_retrigger = retrigger;
-    }
-
-    InstrumentManager::InstrumentManager(size_t buffer_size)
-    : m_instruments{}
-    , m_buffer(buffer_size, 0)
-    , m_buffer_cursor{}
-    {
-    }
-
-    Instrument& InstrumentManager::instrument(size_t num)
-    {
-        return m_instruments[num];
-    }
-
-    void InstrumentManager::add_instrument(Instrument& instrument)
-    {
-        m_instruments.push_back(instrument);
-    }
-
-    float InstrumentManager::process(float time_element)
-    {
-        float sample = 0;
-        for (auto it = m_instruments.begin(); it != m_instruments.end(); ++it)
-        {
-            sample += it->process(time_element);
-        }
-
-        return sample;
     }
 }

@@ -1,20 +1,24 @@
 #ifndef ENVELOPE_H_
 #define ENVELOPE_H_
 
+#include <memory>
+
 namespace MusicLib
 {
     class Envelope
     {
     public:
-        Envelope();
+        Envelope() = default;
         virtual ~Envelope() = default;
+
+        virtual std::shared_ptr<Envelope> clone() const = 0;
 
         virtual void trig(bool is_on) = 0;
         virtual float process(float time) = 0;
 
         virtual void set_retrigger(bool is_retrigger) = 0;
 
-        bool is_on() const;
+        virtual bool is_on() const = 0;
     };
 
     class EnvelopeZero : public Envelope
@@ -23,10 +27,14 @@ namespace MusicLib
         explicit EnvelopeZero();
         ~EnvelopeZero() noexcept = default;
 
+        std::shared_ptr<Envelope> clone() const override;
+
         void trig(bool is_on) override;
         float process(float time) override;
 
-        bool is_on() const;
+        void set_retrigger(bool is_retrigger) override;
+
+        bool is_on() const override;
     
     private:
         bool m_is_on;
@@ -37,6 +45,8 @@ namespace MusicLib
     public:
         explicit EnvelopeADSR(float attack = .01, float decay = 1, float sustain = 1, float release = .01, bool is_retrigger = true);
         ~EnvelopeADSR() noexcept = default;
+
+        std::shared_ptr<Envelope> clone() const override;
 
         float attack() const;
         void attack(float attack);
