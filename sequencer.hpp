@@ -18,49 +18,35 @@ using Sequence = std::vector<std::vector<Command>>;
 
 namespace MusicLib
 {
-    // class Sequencer
-    // {
-    // public:
-    //     explicit Sequencer(float bpm, unsigned int steps_per_beat,
-    //         unsigned int sample_rate, InstrumentManager& instrument_manager,
-    //         Sequence& sequence);
-    //     ~Sequencer() noexcept = default;
-
-    //     void step();
-
-    //     float beat_duration();
-
-    //     unsigned long samples_per_beat() const;
-
-    //     const float& bpm() const;
-    //     float& bpm(float bpm);
-    //     Sequence& sequence();
-
-    //     void handle_sample();
-
-    // private:
-    //     Sequence& m_sequence;
-    //     size_t m_cursor;
-
-    //     InstrumentManager& m_instrument_manager;
-    //     float m_bpm;
-    //     unsigned int m_steps_per_beat;
-    //     float m_step_duration;
-    //     unsigned long m_sample_rate;
-    //     unsigned long m_samples_per_step;
-    //     unsigned long m_step_counter;
-    // };
-
+    /**
+     * @brief A sequencer interface that can be called from the audio engine
+     * callback.
+     * 
+     */
     class Sequencer
     {
     public:
         Sequencer() = default;
         virtual ~Sequencer() = default;
 
+        /**
+         * @brief A method to call from the audio engine callback for every
+         * sample, to handle the progression of the track in time.
+         */
         virtual void handle_sample() = 0;
+
+        /**
+         * @brief Perform a single step in the arrangement.
+         * Generally called from handle_sample(), but kept public for the option
+         * to progress the track manually.
+         */
         virtual void step() = 0;
     };
 
+    /**
+     * @brief A simple sequencer class - one time manager, one command stream,
+     * performs actions once a step.
+     */
     class SequencerBasic : public Sequencer
     {
     public:
@@ -71,6 +57,12 @@ namespace MusicLib
         ~SequencerBasic() noexcept = default;
 
         void handle_sample() override;
+
+        /**
+         * @brief Receive a command from the command stream, call the command
+         * processor's handlers to execute it and progress the command stream
+         * one step.
+         */
         void step() override;
 
     private:
@@ -78,12 +70,12 @@ namespace MusicLib
         CommandStream& m_cmd_stream;
         std::reference_wrapper<InstrumentManager> m_ins_mgr;
         CommandProcessor& m_cmd_processor;
-
-        // std::function<void(Command* cmd, CommandStream* cmd_stream)> m_cmd_stream_handler;
-        // std::function<void(Command* cmd, TimeManager* time_manager)> m_time_handler;
-
     };
 
+    /**
+     * @brief A sequencer that can hold multiple command streams and play them
+     * in parallel.
+     */
     class SequencerMultiChannel : public Sequencer
     {
     public:
@@ -92,6 +84,11 @@ namespace MusicLib
         ~SequencerMultiChannel() noexcept = default;
 
         void handle_sample() override;
+
+        /**
+         * @brief Receive and execute a command from each of the command
+         *        streams.
+         */
         void step() override;
 
     private:
@@ -101,13 +98,27 @@ namespace MusicLib
         CommandProcessor& m_cmd_processor;
     };
 
+    /**
+     * @brief An adaptor class that runs multiple sequencers in parallel, each
+     *        with its own timekeeping method.
+     * 
+     */
     class MultiSequencer : public Sequencer
     {
     public:
         explicit MultiSequencer(std::vector<Sequencer>& seqs);
         ~MultiSequencer() noexcept = default;
 
+        /**
+         * @brief Call the handle_sample() method of each of the sequencers.
+         * 
+         */
         void handle_sample() override;
+
+        /**
+         * @brief Perform a step in each of the sequencers. This function is
+         *        only here for completeness.
+         */
         void step() override;
 
     private:

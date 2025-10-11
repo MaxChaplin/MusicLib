@@ -11,53 +11,11 @@
 
 namespace MusicLib
 {
-    // class CommandProcessor
-    // {
-    // public:
-    //     CommandProcessor();
-    //     virtual ~CommandProcessor() = default;
-
-    //     template <typename Command, typename CommandStream>
-    //     void handle_command_stream(Command& cmd, CommandStream& cmd_stream);
-
-    //     template <typename Command, typename InstrumentManager>
-    //     void handle_instrument_manager(Command& cmd, InstrumentManager& ins_mgr);
-
-    //     template <typename Command, typename TimeManager>
-    //     void handle_time_manager(Command& cmd, TimeManager& time_mgr);
-
-    //     // void operator()(const Command& cmd)
-    //     // {
-    //     //     std::visit(*this, cmd);
-    //     // }
-
-    //     // void operator()(const CommandNoteOn& cmd);
-    //     // void operator()(const CommandNoteOnFreq& cmd);
-    //     // void operator()(const CommandNoteOff& cmd);
-    //     // void operator()(const CommandVol& cmd);
-    // };
-
-    // class CommandProcessorBasic : public CommandProcessor
-    // {
-    // public:
-    //     explicit CommandProcessorBasic();
-    //     ~CommandProcessorBasic() noexcept = default;
-
-    //     template <typename Command, typename CommandStream>
-    //     void handle_command_stream(Command& cmd, CommandStream& cmd_stream);
-
-    //     template <typename Command, typename InstrumentManager>
-    //     void handle_instrument_manager(Command& cmd, InstrumentManager& ins_mgr);
-
-    //     template <typename Command, typename TimeManager>
-    //     void handle_time_manager(Command& cmd, TimeManager& time_mgr);
-    
-    // private:
-    //     std::function<void(Command* cmd, CommandStream* cmd_stream)> m_cmd_stream_handler;
-    //     std::function<void(Command* cmd, TimeManager* ins_mgr)> m_ins_mgr_handler;
-    //     std::function<void(Command* cmd, TimeManager* time_manager)> m_time_handler;
-    // };
-
+    /**
+     * @brief A command processor is given to the sequencer, which invokes the 
+     * handle functions in its step() method.
+     * 
+     */
     class CommandProcessor
     {
     public:
@@ -69,23 +27,18 @@ namespace MusicLib
         virtual void handle_time_manager(Command& cmd, TimeManager& time_mgr) = 0;
     };
 
-    // template <typename C, typename CS, typename IM, typename TM>
-    // class CommandProcessorBasic : public CommandProcessor
-    // {
-    // public:
-    //     explicit CommandProcessorBasic();
-    //     ~CommandProcessorBasic() noexcept = default;
-
-        
-    //     void handle_command_stream(C& cmd, CS& cmd_stream) override;
-    //     void handle_instrument_manager(C& cmd, IM& ins_mgr) override;
-    //     void handle_time_manager(C& cmd, TM& time_mgr) override;
-    // };
-
+    /**
+     * @brief This command processor supports one concrete type for Command and
+     * each of the other handled objects.
+     * The handle functions must be given before playing.
+     * Since the handle methods perform upcasting, it is the responsibility of
+     * the given handlers to ensure that every command can be executed safely
+     * (e.g. if one of the commands calls an instrument's method, all 
+     * instruments have it.)
+     */
     class CommandProcessorBasic : public CommandProcessor
     {
     public:
-        // explicit CommandProcessorBasic(auto m_cmd_stream_handler = [](){},        auto m_ins_mgr_handler = [](){},  auto m_time_handler = [](){});
         explicit CommandProcessorBasic();
         ~CommandProcessorBasic() noexcept = default;
 
@@ -131,7 +84,6 @@ namespace MusicLib
         std::function<void(Command&, InstrumentManager&)> m_ins_mgr_handler;
         std::function<void(Command&, TimeManager&)> m_time_handler;
     };
-
 }
 
 

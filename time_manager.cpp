@@ -1,5 +1,4 @@
 #include "time_manager.hpp"
-#include <iostream>
 
 namespace MusicLib
 {
@@ -15,9 +14,6 @@ namespace MusicLib
         {
             --m_sample_counter;
         }
-
-
-        // std::cout << m_sample_counter << std::endl;
 
         return m_sample_counter == 0;
     }

@@ -4,13 +4,18 @@
 #include <variant>
 #include <vector>
 #include <memory>
+#include <functional>
 
 #include "command.hpp"
 
 namespace MusicLib
 {
-    class Instrument;
+    class Instrument; // Forward declaration
 
+    /**
+     * @brief An interface for classes that contain an organized sequence of 
+     * commands, to be read and acted upon by the sequencer.
+     */
     class CommandStream
     {
     public:
@@ -22,6 +27,11 @@ namespace MusicLib
         virtual void cursor(unsigned long index) = 0;
     };
 
+    /**
+     * @brief The simplest command stream, with a single vector of commands.
+     * offloads the entire effort of playing the instruments and keeping track 
+     * of parameters to the the instrument manager.
+     */
     class CommandStreamBasic : public CommandStream
     {
     public:
@@ -38,6 +48,10 @@ namespace MusicLib
         bool m_looping;
     };
 
+    /**
+     * @brief A command stream that holds a reference to an instrument. This
+     * allows for commands that don't include the instrument number.
+     */
     class CommandStreamInstrument : public CommandStream
     {
     public:
@@ -57,7 +71,7 @@ namespace MusicLib
         unsigned long m_cursor;
         bool m_looping;
 
-        std::shared_ptr<Instrument> m_ins;
+        std::reference_wrapper<Instrument> m_ins;
     };
 
 };

@@ -4,16 +4,7 @@
 
 #include <portaudio.h>
 #include <functional>
-// #include <iostream>
 
-// static void manage_error(PaError err)
-// {
-//     if(err != paNoError)
-//     {
-//         std::cerr << "PortAudio error " << err << std::endl;
-//     }
-    
-// }
 namespace MusicLib
 {
     SequencerBasic::SequencerBasic(TimeManager& time_mgr, InstrumentManager& ins_mgr,
@@ -68,7 +59,7 @@ namespace MusicLib
     {
         for (auto cs = m_cmd_streams.begin(); cs != m_cmd_streams.end(); ++cs)
         {
-            Command cmd = cs->current();
+            Command& cmd = cs->current();
             
             // Handle the command.
             m_cmd_processor.handle_command_stream(cmd, *cs);

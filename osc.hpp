@@ -9,6 +9,11 @@ namespace MusicLib
 {
     float osc_tri(float phase);
 
+    /**
+     * @brief An oscillator interface. Used by the VoiceOsc class as the first
+     * step of the synthesis chain. Generally doesn't handle time or frequency,
+     * only the basic waveshape.
+     */
     class Oscillator
     {
     public:
@@ -17,9 +22,19 @@ namespace MusicLib
 
         virtual std::shared_ptr<Oscillator> clone() const = 0;
 
+        /**
+         * @brief Give the value of the oscillator at the given phase.
+         * 
+         * @param phase a number between 0 (including) and 1 (not including).
+         * The phase typically evolves in time like a upwards ramp function.
+         * @return A sample. 
+         */
         virtual float value(float phase) const = 0;
     };
 
+    /**
+     * @brief The simplest oscillator, revolving around a single pure function.
+     */
     class OscillatorBasic : public Oscillator
     {
     public:
