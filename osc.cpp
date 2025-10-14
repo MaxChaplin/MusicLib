@@ -5,7 +5,22 @@
 
 namespace MusicLib
 {
-    float osc_tri(float phase)
+    float osc_saw(float phase)
+    {
+        return 2 * phase - 1;
+    }
+
+    float osc_square(float phase)
+    {
+        if (phase < .5)
+        {
+            return -1;
+        }
+
+        return 1;
+    }
+
+    float osc_triangle(float phase)
     {
         if (phase < .5)
         {
@@ -14,6 +29,7 @@ namespace MusicLib
 
         return 3 - 4 * phase;
     }
+
 
     OscillatorBasic::OscillatorBasic(std::function<float(float)> osc_func)
     : m_osc_func{osc_func}
@@ -30,6 +46,28 @@ namespace MusicLib
     float OscillatorBasic::value(float phase) const
     {
         return m_osc_func(phase);
+    }
+
+    OscillatorPulse::OscillatorPulse(float pulsewidth)
+    : m_pulsewidth{pulsewidth}
+    {
+
+    }
+
+    std::shared_ptr<Oscillator> OscillatorPulse::clone() const
+    {
+        return std::make_shared<OscillatorPulse>(*this);
+    }
+
+
+    float OscillatorPulse::value(float phase) const
+    {
+        if (phase < m_pulsewidth)
+        {
+            return 1;
+        }
+
+        return -1;
     }
 
     OscillatorWavetable::OscillatorWavetable(std::vector<float>&wavetable, bool antialiasing)
