@@ -14,6 +14,9 @@ namespace MusicLib
         TimeManager() = default;
         virtual ~TimeManager() = default;
 
+        virtual void playing(bool playing) = 0;
+        virtual bool playing() const = 0;
+
         virtual bool count_sample() = 0;
     };
 
@@ -23,10 +26,14 @@ namespace MusicLib
         explicit TimeManagerEventBased();
         ~TimeManagerEventBased() noexcept = default;
 
+        void playing(bool playing) override;
+        bool playing() const override;
+
         bool count_sample() override;
         void reset_counter(unsigned long samples_until_next_step);
     
     private:
+        bool m_playing;
         unsigned long m_sample_counter;
     };
 
@@ -35,6 +42,9 @@ namespace MusicLib
     public:
         explicit TimeManagerTempo(unsigned long sample_rate, float bpm = 120, unsigned int steps_per_beat = 4, float shuffle = .5);
         ~TimeManagerTempo() noexcept = default;
+
+        void playing(bool playing) override;
+        bool playing() const override;
 
         bool count_sample() override;
 
@@ -46,6 +56,7 @@ namespace MusicLib
         float step_duration();
 
     private:
+        bool m_playing;
         float m_bpm;
         unsigned int m_steps_per_beat;
         float m_step_duration;

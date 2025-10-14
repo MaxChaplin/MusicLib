@@ -14,12 +14,12 @@ namespace MusicLib
     , m_ins_mgr{ins_mgr}
     , m_cmd_processor{cmd_processor}
     {
-
+        m_time_mgr.playing(true);
     }
 
     void SequencerBasic::handle_sample()
     {
-        if (m_time_mgr.count_sample())
+        if (m_time_mgr.playing() && m_time_mgr.count_sample())
         {
             step();
         }
@@ -36,6 +36,11 @@ namespace MusicLib
 
         // Go to next command.
         m_cmd_stream.step();
+
+        if (m_cmd_stream.finished())
+        {
+            m_time_mgr.playing(false);
+        }
     }
 
     SequencerMultiChannel::SequencerMultiChannel(TimeManager& time_mgr, InstrumentManager& ins_mgr, std::vector<CommandStream>& cmd_streams, CommandProcessor& cmd_processor)

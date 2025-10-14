@@ -3,9 +3,20 @@
 namespace MusicLib
 {
     TimeManagerEventBased::TimeManagerEventBased()
-    : m_sample_counter{}
+    : m_playing{false}
+    , m_sample_counter{}
     {
         
+    }
+
+    void TimeManagerEventBased::playing(bool playing)
+    {
+        m_playing = playing;
+    }
+
+    bool TimeManagerEventBased::playing() const
+    {
+        return m_playing;
     }
 
     bool TimeManagerEventBased::count_sample()
@@ -24,7 +35,8 @@ namespace MusicLib
     }
 
     TimeManagerTempo::TimeManagerTempo(unsigned long sample_rate, float bpm, unsigned int steps_per_beat, float shuffle)
-    : m_bpm{bpm}
+    : m_playing{false}
+    , m_bpm{bpm}
     , m_steps_per_beat{steps_per_beat}
     , m_step_duration{60.0f / (bpm * steps_per_beat)}
     , m_sample_rate{sample_rate}
@@ -38,6 +50,16 @@ namespace MusicLib
         {
             m_samples_per_step = sps;
         }
+    }
+
+    void TimeManagerTempo::playing(bool playing)
+    {
+        m_playing = playing;
+    }
+
+    bool TimeManagerTempo::playing() const
+    {
+        return m_playing;
     }
 
     bool TimeManagerTempo::count_sample()
