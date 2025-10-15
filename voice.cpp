@@ -60,9 +60,9 @@ namespace MusicLib
         return m_env->is_on();
     }
 
-    float VoiceOsc::process(float sample_time)
+    void VoiceOsc::process(float sample_time, float& output)
     {
-        float sample = m_vol * m_osc->value(m_phase) * m_env->process(sample_time);
+        output = m_vol * m_osc->value(m_phase) * m_env->process(sample_time);
 
         // Propagate phase.
         m_phase += sample_time * m_freq;
@@ -70,9 +70,6 @@ namespace MusicLib
         {
             m_phase -= 1;
         }
-
-        // std::cout << out << std::endl;
-        return sample;
     }
 
     VoiceMulti::VoiceMulti(std::vector<std::shared_ptr<Voice>>& voices, Envelope& env, float freq, float vol)
@@ -119,10 +116,11 @@ namespace MusicLib
         m_freq = freq;
         m_env->trig(true);
 
-        for (size_t i=0; i < m_voices.size(); ++i)
+        // for (size_t i=0; i < m_voices.size(); ++i)
+        for (auto v : m_voices)
         {
-            m_voices[i]->freq(freq);
-            m_voices[i]->env().trig(true);
+            v->freq(freq);
+            v->env().trig(true);
         }
     }
 
@@ -130,9 +128,10 @@ namespace MusicLib
     {
         m_env->trig(false);
 
-        for (size_t i=0; i < m_voices.size(); ++i)
+        // for (size_t i=0; i < m_voices.size(); ++i)
+        for (auto v : m_voices)
         {
-            m_voices[i]->env().trig(false);
+            v->env().trig(false);
         }
     }
 
@@ -141,15 +140,16 @@ namespace MusicLib
         return m_env->is_on();
     }
 
-    float VoiceMulti::process(float sample_time)
+    void VoiceMulti::process(float sample_time, float& output)
     {
-        float sample = 0;
-        for (size_t i=0; i < m_voices.size(); ++i)
+        output = 0;
+        // for (size_t i=0; i < m_voices.size(); ++i)
+        for (auto v : m_voices)
         {
-            sample += m_vol * m_voices[i]->process(sample_time);
+            float temp;
+            v->process(sample_time, temp);
+            output += m_vol * temp;
         }
-
-        return sample;
     }
 
 }

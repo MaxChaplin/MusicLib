@@ -16,8 +16,8 @@ namespace MusicLib
 
         Instrument& instrument(size_t num);
 
-        void add_instrument(Instrument& instrument);
-        float process(float time_element);
+        void clone_instrument(Instrument instrument);
+        void process(float sample_time, float& out_left, float& out_right);
 
     private:
         std::vector<Instrument> m_instruments;
