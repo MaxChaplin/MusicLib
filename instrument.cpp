@@ -6,7 +6,7 @@
 namespace MusicLib
 {
     Instrument::Instrument(Voice& voice, unsigned int polyphony, float vol, float pan, bool retrigger)
-    : m_voices{std::vector<std::shared_ptr<Voice>>{}}
+    : m_voices{std::vector<std::unique_ptr<Voice>>{}}
     , m_vol{vol}
     , m_pan{pan}
     , m_retrigger{retrigger}
@@ -19,6 +19,35 @@ namespace MusicLib
         }
     }
 
+   Instrument::Instrument(const Instrument& other)
+    : m_voices{}
+    , m_vol{other.m_vol}
+    , m_pan{other.m_pan}
+    , m_retrigger{other.m_retrigger}
+    {
+        for (const auto& v : other.m_voices)
+        {
+            m_voices.emplace_back(v->clone());
+        }
+    }
+
+    Instrument& Instrument::operator=(const Instrument& other)
+    {
+        if (this != &other)
+        {
+            m_voices = std::vector<std::unique_ptr<Voice>>{};
+            for (const auto& v : other.m_voices)
+            {
+                m_voices.emplace_back(v->clone());
+            }
+
+            m_vol = other.m_vol;
+            m_pan = other.m_pan;
+            m_retrigger = other.m_retrigger;
+        }
+        return *this;
+    }
+
     Voice& Instrument::voice(size_t num)
     {
         return *m_voices[num];
@@ -28,13 +57,13 @@ namespace MusicLib
     {
         out_left = 0;
         out_right = 0;
+        static float temp;
 
-        // for (size_t i=0; i < m_voices.size(); ++i)
-        for (auto v : m_voices)
+        for (auto& v : m_voices)
         {
             if (v->is_on())
             {
-                float temp;
+                
                 v->process(sample_time, temp);
                 out_left += m_vol * temp;
             }

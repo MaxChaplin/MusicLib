@@ -21,7 +21,7 @@ namespace MusicLib
         Voice() = default;
         virtual ~Voice() = default;
 
-        virtual std::shared_ptr<Voice> clone() const = 0;
+        virtual std::unique_ptr<Voice> clone() const = 0;
 
         virtual Envelope& env() = 0;
 
@@ -55,8 +55,12 @@ namespace MusicLib
         explicit VoiceOsc(Oscillator& m_osc, Envelope& env, float freq = 440,
                           float vol = 1.);
         ~VoiceOsc() noexcept = default;
+        VoiceOsc(const VoiceOsc& other);
+        VoiceOsc& operator=(const VoiceOsc& other);
+        VoiceOsc(VoiceOsc&&) noexcept = default;
+        VoiceOsc& operator=(VoiceOsc&&) noexcept = default;
 
-        std::shared_ptr<Voice> clone() const override;
+        std::unique_ptr<Voice> clone() const override;
 
         Envelope& env() override;
 
@@ -73,8 +77,8 @@ namespace MusicLib
         void process(float sample_time, float& output) override;
 
     private:
-        std::shared_ptr<Oscillator> m_osc;
-        std::shared_ptr<Envelope> m_env;
+        std::unique_ptr<Oscillator> m_osc;
+        std::unique_ptr<Envelope> m_env;
         float m_freq;
         float m_phase;
         float m_vol;
@@ -87,11 +91,15 @@ namespace MusicLib
     class VoiceMulti : public Voice
     {
     public:
-        explicit VoiceMulti(std::vector<std::shared_ptr<Voice>>& voices,
+        explicit VoiceMulti(std::vector<std::unique_ptr<Voice>>& voices,
                             Envelope& env, float freq = 440, float vol = 1.);
         ~VoiceMulti() noexcept = default;
+        VoiceMulti(const VoiceMulti& other);
+        VoiceMulti& operator=(const VoiceMulti& other);
+        VoiceMulti(VoiceMulti&&) noexcept = default;
+        VoiceMulti& operator=(VoiceMulti&&) noexcept = default;
 
-        std::shared_ptr<Voice> clone() const override;
+        std::unique_ptr<Voice> clone() const override;
 
         Envelope& env() override;
 
@@ -110,8 +118,8 @@ namespace MusicLib
         void process(float sample_time, float& output) override;
 
     private:
-        std::vector<std::shared_ptr<Voice>> m_voices;
-        std::shared_ptr<Envelope> m_env;
+        std::vector<std::unique_ptr<Voice>> m_voices;
+        std::unique_ptr<Envelope> m_env;
         float m_freq;
         float m_phase;
         float m_vol;
@@ -128,8 +136,13 @@ namespace MusicLib
             float freq_carrier = 440, float freq_modulator = 440,
             float fm_level = 0, float vol = 1., unsigned int oversamping = 1);
         ~VoiceFM2() noexcept = default;
+        VoiceFM2(const VoiceFM2& other);
+        VoiceFM2& operator=(const VoiceFM2& other);
+        VoiceFM2(VoiceFM2&&) noexcept = default;
+        VoiceFM2& operator=(VoiceFM2&&) noexcept = default;
 
-        std::shared_ptr<Voice> clone() const override;
+
+        std::unique_ptr<Voice> clone() const override;
 
         Envelope& env() override;
 
@@ -146,9 +159,9 @@ namespace MusicLib
         void process(float sample_time, float& output) override;
 
     private:
-        std::shared_ptr<Oscillator> m_carrier;
-        std::shared_ptr<Oscillator> m_modulator;
-        std::shared_ptr<Envelope> m_env;
+        std::unique_ptr<Oscillator> m_carrier;
+        std::unique_ptr<Oscillator> m_modulator;
+        std::unique_ptr<Envelope> m_env;
 
         float m_freq;
         float m_phase;
@@ -168,8 +181,12 @@ namespace MusicLib
         explicit VoicePD(Oscillator& m_osc, WaveShaper& phase_func,
             Envelope& env, float freq = 440, float vol = 1.);
         ~VoicePD() noexcept = default;
+        VoicePD(const VoicePD& other);
+        VoicePD& operator=(const VoicePD& other);
+        VoicePD(VoicePD&&) noexcept = default;
+        VoicePD& operator=(VoicePD&&) noexcept = default;
 
-        std::shared_ptr<Voice> clone() const override;
+        std::unique_ptr<Voice> clone() const override;
 
         Envelope& env() override;
 
@@ -186,9 +203,9 @@ namespace MusicLib
         void process(float sample_time, float& output) override;
 
     private:
-        std::shared_ptr<Oscillator> m_osc;
-        std::shared_ptr<WaveShaper> m_phase_func;
-        std::shared_ptr<Envelope> m_env;
+        std::unique_ptr<Oscillator> m_osc;
+        std::unique_ptr<WaveShaper> m_phase_func;
+        std::unique_ptr<Envelope> m_env;
         float m_freq;
         float m_phase;
         float m_vol;

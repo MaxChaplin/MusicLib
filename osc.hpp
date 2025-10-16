@@ -23,7 +23,7 @@ namespace MusicLib
         Oscillator() = default;
         virtual ~Oscillator() = default;
 
-        virtual std::shared_ptr<Oscillator> clone() const = 0;
+        virtual std::unique_ptr<Oscillator> clone() const = 0;
 
         /**
          * @brief Give the value of the oscillator at the given phase.
@@ -44,7 +44,7 @@ namespace MusicLib
         explicit OscillatorBasic(std::function<float(float)> osc_func);
         ~OscillatorBasic() noexcept = default;
 
-        std::shared_ptr<Oscillator> clone() const override;
+        std::unique_ptr<Oscillator> clone() const override;
 
         float value(float phase) const override;
 
@@ -61,7 +61,7 @@ namespace MusicLib
         explicit OscillatorPulse(float pulsewidth);
         ~OscillatorPulse() noexcept = default;
 
-        std::shared_ptr<Oscillator> clone() const override;
+        std::unique_ptr<Oscillator> clone() const override;
 
         float value(float phase) const override;
 
@@ -78,10 +78,10 @@ namespace MusicLib
     class OscillatorWavetable : public Oscillator
     {
     public:
-        explicit OscillatorWavetable(std::vector<float>& wavetable, bool antialiasing = false);
+        explicit OscillatorWavetable(std::vector<float> wavetable, bool antialiasing = false);
         ~OscillatorWavetable() noexcept = default;
 
-        std::shared_ptr<Oscillator> clone() const override;
+        std::unique_ptr<Oscillator> clone() const override;
 
         float value(float phase) const override;
 

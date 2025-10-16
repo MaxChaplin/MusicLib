@@ -37,9 +37,9 @@ namespace MusicLib
 
     }
 
-    std::shared_ptr<Oscillator> OscillatorBasic::clone() const
+    std::unique_ptr<Oscillator> OscillatorBasic::clone() const
     {
-        return std::make_shared<OscillatorBasic>(*this);
+        return std::make_unique<OscillatorBasic>(*this);
     }
 
 
@@ -54,9 +54,9 @@ namespace MusicLib
 
     }
 
-    std::shared_ptr<Oscillator> OscillatorPulse::clone() const
+    std::unique_ptr<Oscillator> OscillatorPulse::clone() const
     {
-        return std::make_shared<OscillatorPulse>(*this);
+        return std::make_unique<OscillatorPulse>(*this);
     }
 
 
@@ -70,16 +70,16 @@ namespace MusicLib
         return -1;
     }
 
-    OscillatorWavetable::OscillatorWavetable(std::vector<float>&wavetable, bool antialiasing)
-    : m_wavetable{wavetable}
+    OscillatorWavetable::OscillatorWavetable(std::vector<float> wavetable, bool antialiasing)
+    : m_wavetable{std::move(wavetable)}
     , m_antialiasing{antialiasing}
     {
 
     }
 
-    std::shared_ptr<Oscillator> OscillatorWavetable::clone() const
+    std::unique_ptr<Oscillator> OscillatorWavetable::clone() const
     {
-        return std::make_shared<OscillatorWavetable>(*this);
+        return std::make_unique<OscillatorWavetable>(*this);
     }
 
     float OscillatorWavetable::value(float phase) const

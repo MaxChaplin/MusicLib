@@ -16,7 +16,7 @@ namespace MusicLib
 
         Instrument& instrument(size_t num);
 
-        void clone_instrument(Instrument instrument);
+        void clone_instrument(Instrument& instrument);
         void process(float sample_time, float& out_left, float& out_right);
 
     private:

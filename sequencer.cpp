@@ -14,7 +14,7 @@ namespace MusicLib
     , m_ins_mgr{ins_mgr}
     , m_cmd_processor{cmd_processor}
     {
-        m_time_mgr.playing(true);
+        m_time_mgr.playing(false);
     }
 
     void SequencerBasic::handle_sample()

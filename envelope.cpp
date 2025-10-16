@@ -8,9 +8,9 @@ namespace MusicLib
 
     }
 
-    std::shared_ptr<Envelope> EnvelopeZero::clone() const
+    std::unique_ptr<Envelope> EnvelopeZero::clone() const
     {
-        return std::make_shared<EnvelopeZero>(*this);
+        return std::make_unique<EnvelopeZero>(*this);
     }
 
     void EnvelopeZero::trig(bool is_on)
@@ -49,9 +49,9 @@ namespace MusicLib
 
     }
 
-    std::shared_ptr<Envelope> EnvelopeADSR::clone() const
+    std::unique_ptr<Envelope> EnvelopeADSR::clone() const
     {
-        return std::make_shared<EnvelopeADSR>(*this);
+        return std::make_unique<EnvelopeADSR>(*this);
     }
 
     float EnvelopeADSR::attack() const
