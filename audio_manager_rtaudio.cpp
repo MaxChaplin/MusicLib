@@ -1,95 +1,87 @@
 #include "audio_manager_rtaudio.hpp"
-#include "data.hpp"
 
 #include <RtAudio.h>
 #include <iostream>
 #include <memory>
 // #include <vector>
 
-namespace MusicLib
+namespace MusicLib {
+
+int rtaudio_callback(void *outputBuffer, void *inputBuffer [[maybe_unused]], unsigned int nBufferFrames, double streamTime [[maybe_unused]], RtAudioStreamStatus status, void *userData)
 {
-    int rtaudio_callback(void *outputBuffer, void *inputBuffer [[maybe_unused]], unsigned int nBufferFrames, double streamTime [[maybe_unused]], RtAudioStreamStatus status, void *userData)
+    float *out = (float*) outputBuffer;
+    RtAudioData *data = (RtAudioData*) userData;
+    Sequencer& seq = data->seq;
+    InstrumentManager& ins_mgr = data->ins_mgr;
+
+    if (status)
     {
-        float *out = (float*) outputBuffer;
-        RtAudioData *data = (RtAudioData*) userData;
-        Sequencer& sequencer = data->seq;
-        InstrumentManager& ins_mgr = data->ins_mgr;
-
-        if (status)
-        {
-            std::cout << "Stream underflow detected!" << std::endl;
-        }
-
-        // Write interleaved audio data.
-        for (size_t i = 0; i < nBufferFrames; ++i)
-        {
-            ins_mgr.process(data->sample_duration, *out, *(out+1));
-            out += 2;
-            sequencer.handle_sample();
-        }
-
-        return 0;
+        std::cout << "Stream underflow detected!" << std::endl;
     }
 
-    AudioManagerRtAudio::AudioManagerRtAudio(unsigned int sample_rate, unsigned int buffer_size, RtAudioData& callback_data)
-    : m_sample_rate{sample_rate}
-    , m_buffer_size{buffer_size}
-    , m_sample_duration{1.0f / buffer_size}
-    , m_dac{}
-    , m_callback_data{callback_data}
-    , m_stream_parameters{}
+    // Write interleaved audio data.
+    for (size_t i = 0; i < nBufferFrames; ++i)
     {
-        // Set stream parameters.
-        m_stream_parameters.deviceId = m_dac.getDefaultOutputDevice();
-        m_stream_parameters.nChannels = 2;
-        m_stream_parameters.firstChannel = 0;
-
-        if (m_dac.getDeviceIds().size() < 1)
-        {
-            std::cerr << "No device IDs found!" << std::endl;
-        }
+        ins_mgr.process(data->sample_duration, *out, *(out+1));
+        out += 2;
+        seq.tick();
     }
 
-    AudioManagerRtAudio::~AudioManagerRtAudio() noexcept
+    return 0;
+}
+
+AudioManagerRtAudio::AudioManagerRtAudio(unsigned int sample_rate, unsigned int buffer_size, RtAudioData& callback_data)
+: m_sample_rate{sample_rate}
+, m_buffer_size{buffer_size}
+, m_sample_duration{1.0f / buffer_size}
+, m_dac{}
+, m_callback_data{callback_data}
+, m_stream_parameters{}
+{
+    // Set stream parameters.
+    m_stream_parameters.deviceId = m_dac.getDefaultOutputDevice();
+    m_stream_parameters.nChannels = 2;
+    m_stream_parameters.firstChannel = 0;
+
+    if (m_dac.getDeviceIds().size() < 1)
     {
-        if (m_dac.isStreamOpen())
-        {
-            m_dac.closeStream();
-        }
+        std::cerr << "No device IDs found!" << std::endl;
     }
+}
 
-    void AudioManagerRtAudio::play()
+AudioManagerRtAudio::~AudioManagerRtAudio() noexcept
+{
+    if (m_dac.isStreamOpen())
     {
-        auto err = m_dac.openStream(&m_stream_parameters, nullptr, RTAUDIO_FLOAT64, m_sample_rate, &m_buffer_size, &rtaudio_callback, (void*) &m_callback_data);
-        // manage_error(err);
-
-        err = m_dac.startStream();
-        // manage_error(err);
+        m_dac.closeStream();
     }
+}
 
-    void AudioManagerRtAudio::stop()
-    {   
-        if (m_dac.isStreamRunning())
-        {
-            m_dac.stopStream();
-        }
-    }
+void AudioManagerRtAudio::play()
+{
+    auto err = m_dac.openStream(&m_stream_parameters, nullptr, RTAUDIO_FLOAT64, m_sample_rate, &m_buffer_size, &rtaudio_callback, (void*) &m_callback_data);
+    // manage_error(err);
 
-    unsigned int AudioManagerRtAudio::sample_rate()
+    err = m_dac.startStream();
+    // manage_error(err);
+}
+
+void AudioManagerRtAudio::stop()
+{   
+    if (m_dac.isStreamRunning())
     {
-        return m_sample_rate;
+        m_dac.stopStream();
     }
+}
 
-    float AudioManagerRtAudio::sample_duration()
-    {
-        return m_sample_duration;
-    }
+unsigned int AudioManagerRtAudio::sample_rate()
+{
+    return m_sample_rate;
+}
 
-    // void AudioManagerRtAudio::manage_error(RtAudioErrorType err)
-    // {
-    //     if(err)
-    //     {
-    //         std::cerr << m_dac.getErrorText() << std::endl;
-    //     }
-    // }
+float AudioManagerRtAudio::sample_duration()
+{
+    return m_sample_duration;
+}
+
 }

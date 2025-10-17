@@ -5,49 +5,47 @@
 #include <vector>
 #include <memory>
 
-namespace MusicLib
+namespace MusicLib {
+
+class WaveShaper
 {
-    float osc_tri(float phase);
+public:
+    WaveShaper() = default;
+    virtual ~WaveShaper() = default;
 
-    class WaveShaper
-    {
-    public:
-        WaveShaper() = default;
-        virtual ~WaveShaper() = default;
+    virtual std::shared_ptr<WaveShaper> clone() const = 0;
 
-        virtual std::shared_ptr<WaveShaper> clone() const = 0;
+    virtual float value(float phase) const = 0;
+};
 
-        virtual float value(float phase) const = 0;
-    };
+class WaveShaperBasic : public WaveShaper
+{
+public:
+    explicit WaveShaperBasic(std::function<float(float)> waveshaper_func);
+    ~WaveShaperBasic() noexcept = default;
 
-    class WaveShaperBasic : public WaveShaper
-    {
-    public:
-        explicit WaveShaperBasic(std::function<float(float)> waveshaper_func);
-        ~WaveShaperBasic() noexcept = default;
+    std::shared_ptr<WaveShaper> clone() const override;
 
-        std::shared_ptr<WaveShaper> clone() const override;
+    float value(float phase) const override;
 
-        float value(float phase) const override;
+private:
+    std::function<float(float)> m_waveshaper_func;
+};
 
-    private:
-        std::function<float(float)> m_waveshaper_func;
-    };
+class WaveShaperHardSync : public WaveShaper
+{
+public:
+    explicit WaveShaperHardSync(float ratio);
+    ~WaveShaperHardSync() noexcept = default;
 
-    class WaveShaperHardSync : public WaveShaper
-    {
-    public:
-        explicit WaveShaperHardSync(float ratio);
-        ~WaveShaperHardSync() noexcept = default;
+    std::shared_ptr<WaveShaper> clone() const override;
 
-        std::shared_ptr<WaveShaper> clone() const override;
+    void ratio(float ratio);
+    float value(float phase) const override;
 
-        void ratio(float ratio);
-        float value(float phase) const override;
-
-    private:
-        float m_ratio;
-    };
+private:
+    float m_ratio;
+};
 
 }
 #endif // PHASE_FUNCTION_H_
