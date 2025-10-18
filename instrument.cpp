@@ -48,10 +48,10 @@ Instrument& Instrument::operator=(const Instrument& other)
     return *this;
 }
 
-Voice& Instrument::voice(size_t num)
-{
-    return *m_voices[num];
-}
+// Voice& Instrument::voice(size_t num)
+// {
+//     return *m_voices[num];
+// }
 
 void Instrument::process(float sample_duration, float& out_left, float& out_right)
 {
@@ -125,6 +125,11 @@ float Instrument::pan() const
 void Instrument::retrigger(bool retrigger)
 {
     m_retrigger = retrigger;
+}
+
+Voice& Instrument::voice(size_t index)
+{
+    return *m_voices[index];
 }
 
 }
