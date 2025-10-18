@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <iostream>
 
 namespace MusicLib {
  
@@ -30,6 +31,76 @@ float osc_triangle(float phase)
     return 3 - 4 * phase;
 }
 
+OscillatorSwitch::OscillatorSwitch(unsigned int osc_index)
+: m_oscs{}
+, m_osc_index{osc_index}
+{
+
+}
+
+OscillatorSwitch::OscillatorSwitch(std::vector<std::unique_ptr<Oscillator>>& oscs, unsigned int osc_index)
+: m_oscs{}
+, m_osc_index{osc_index}
+{
+    for (const auto& o : oscs)
+    {
+        m_oscs.emplace_back(o->clone());
+    }
+}
+
+OscillatorSwitch::OscillatorSwitch(const OscillatorSwitch& other)
+: m_oscs{}
+, m_osc_index{other.m_osc_index}
+{
+    for (const auto& o : other.m_oscs)
+    {
+        m_oscs.emplace_back(o->clone());
+    }
+}
+
+OscillatorSwitch& OscillatorSwitch::operator=(const OscillatorSwitch& other)
+{
+    if (this != &other)
+    {
+        m_oscs = std::vector<std::unique_ptr<Oscillator>>{};
+        for (const auto& v : other.m_oscs)
+        {
+            m_oscs.emplace_back(v->clone());
+        }
+
+        m_osc_index = other.m_osc_index;
+    }
+    return *this;
+}
+
+std::unique_ptr<Oscillator> OscillatorSwitch::clone() const
+{
+    return std::make_unique<OscillatorSwitch>(*this);
+}
+
+float OscillatorSwitch::value(float phase) const
+{
+    return m_oscs[m_osc_index]->value(phase);
+}
+
+void OscillatorSwitch::add_osc(Oscillator& osc)
+{
+    m_oscs.emplace_back(osc.clone());
+}
+
+
+void OscillatorSwitch::select(unsigned int osc_index)
+{
+    if (osc_index >= m_oscs.size())
+    {
+        std::cerr << "Invalid oscillator index" << std::endl;
+    }
+    else
+    {
+        m_osc_index = osc_index;
+    }
+
+}
 
 OscillatorBasic::OscillatorBasic(std::function<float(float)> osc_func)
 : m_osc_func{osc_func}

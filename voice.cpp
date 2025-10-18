@@ -6,6 +6,119 @@
 
 namespace MusicLib {
 
+VoiceMulti::VoiceMulti(std::vector<std::unique_ptr<Voice>>& voices, Envelope& env, float freq, float vol)
+: m_voices{}
+, m_env{env.clone()}
+, m_freq{freq}
+, m_phase{0}
+, m_vol{vol}
+{
+    for (const auto& v : voices)
+    {
+        m_voices.emplace_back(v->clone());
+    }
+}
+
+VoiceMulti::VoiceMulti(const VoiceMulti& other)
+: m_voices{}
+, m_env{other.m_env->clone()}
+, m_freq{other.m_freq}
+, m_phase{other.m_phase}
+, m_vol{other.m_vol}
+{
+    for (const auto& v : other.m_voices)
+    {
+        m_voices.emplace_back(v->clone());
+    }
+}
+
+VoiceMulti& VoiceMulti::operator=(const VoiceMulti& other)
+{
+    if (this != &other)
+    {
+        m_voices = std::vector<std::unique_ptr<Voice>>{};
+        for (const auto& v : other.m_voices)
+        {
+            m_voices.emplace_back(v->clone());
+        }
+
+        m_env = other.m_env->clone();
+        m_freq = other.m_freq;
+        m_phase = other.m_phase;
+        m_vol = other.m_vol;
+    }
+    return *this;
+}
+
+std::unique_ptr<Voice> VoiceMulti::clone() const
+{
+    return std::make_unique<VoiceMulti>(*this);
+}
+
+Envelope& VoiceMulti::env()
+{
+    return *m_env;
+}
+
+void VoiceMulti::freq(float freq)
+{
+    m_freq = freq;
+}
+
+float VoiceMulti::freq() const
+{
+    return m_freq;
+}
+
+void VoiceMulti::vol(float vol)
+{
+    m_vol = vol;
+}
+
+void VoiceMulti::note_on(float freq)
+{
+    // Reset the phase unless the note was already on (to prevent clicks).
+    if (!is_on())
+    {
+        m_phase = 0;
+    }
+
+    m_freq = freq;
+    m_env->trig(true);
+
+    for (auto& v : m_voices)
+    {
+        v->freq(freq);
+        v->env().trig(true);
+    }
+}
+
+void VoiceMulti::note_off()
+{
+    m_env->trig(false);
+
+    for (auto& v : m_voices)
+    {
+        v->env().trig(false);
+    }
+}
+
+bool VoiceMulti::is_on() const
+{
+    return m_env->is_on();
+}
+
+void VoiceMulti::process(float sample_duration, float& output)
+{
+    output = 0;
+    for (auto& v : m_voices)
+    {
+        float temp;
+        v->process(sample_duration, temp);
+        output += m_vol * temp;
+    }
+}
+
 VoiceOsc::VoiceOsc(Oscillator& osc, Envelope& env, float freq, float vol)
 : m_osc{osc.clone()}
 , m_env{env.clone()}
@@ -96,120 +209,14 @@ void VoiceOsc::process(float sample_duration, float& output)
     }
 }
 
-VoiceMulti::VoiceMulti(std::vector<std::unique_ptr<Voice>>& voices, Envelope& env, float freq, float vol)
-: m_voices{}
-, m_env{env.clone()}
-, m_freq{freq}
-, m_phase{0}
-, m_vol{vol}
+void VoiceOsc::osc(Oscillator& osc)
 {
-    for (const auto& v : voices)
-    {
-        m_voices.emplace_back(v->clone());
-    }
+    m_osc = osc.clone();
 }
 
-VoiceMulti::VoiceMulti(const VoiceMulti& other)
-: m_voices{}
-, m_env{other.m_env->clone()}
-, m_freq{other.m_freq}
-, m_phase{other.m_phase}
-, m_vol{other.m_vol}
+Oscillator& VoiceOsc::osc()
 {
-    for (const auto& v : other.m_voices)
-    {
-        m_voices.emplace_back(v->clone());
-    }
-}
-
-VoiceMulti& VoiceMulti::operator=(const VoiceMulti& other)
-{
-    if (this != &other)
-    {
-        m_voices = std::vector<std::unique_ptr<Voice>>{};
-        for (const auto& v : other.m_voices)
-        {
-            m_voices.emplace_back(v->clone());
-        }
-
-        m_env = other.m_env->clone();
-        m_freq = other.m_freq;
-        m_phase = other.m_phase;
-        m_vol = other.m_vol;
-    }
-    return *this;
-}
-
-std::unique_ptr<Voice> VoiceMulti::clone() const
-{
-    return std::make_unique<VoiceMulti>(*this);
-}
-
-Envelope& VoiceMulti::env()
-{
-    return *m_env;
-}
-
-void VoiceMulti::freq(float freq)
-{
-    m_freq = freq;
-}
-
-float VoiceMulti::freq() const
-{
-    return m_freq;
-}
-
-void VoiceMulti::vol(float vol)
-{
-    m_vol = vol;
-}
-
-void VoiceMulti::note_on(float freq)
-{
-    // Reset the phase unless the note was already on (to prevent clicks).
-    if (!is_on())
-    {
-        m_phase = 0;
-    }
-
-    m_freq = freq;
-    m_env->trig(true);
-
-    // for (size_t i=0; i < m_voices.size(); ++i)
-    for (auto& v : m_voices)
-    {
-        v->freq(freq);
-        v->env().trig(true);
-    }
-}
-
-void VoiceMulti::note_off()
-{
-    m_env->trig(false);
-
-    // for (size_t i=0; i < m_voices.size(); ++i)
-    for (auto& v : m_voices)
-    {
-        v->env().trig(false);
-    }
-}
-
-bool VoiceMulti::is_on() const
-{
-    return m_env->is_on();
-}
-
-void VoiceMulti::process(float sample_duration, float& output)
-{
-    output = 0;
-    // for (size_t i=0; i < m_voices.size(); ++i)
-    for (auto& v : m_voices)
-    {
-        float temp;
-        v->process(sample_duration, temp);
-        output += m_vol * temp;
-    }
+    return *m_osc;
 }
 
 }

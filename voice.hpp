@@ -46,46 +46,7 @@ public:
 };
 
 /**
- * @brief A voice based around an oscillator object, with a single velocity
- * envelope.
- */
-class VoiceOsc : public Voice
-{
-public:
-    explicit VoiceOsc(Oscillator& m_osc, Envelope& env, float freq = 440,
-                        float vol = 1.);
-    ~VoiceOsc() noexcept = default;
-    VoiceOsc(const VoiceOsc& other);
-    VoiceOsc& operator=(const VoiceOsc& other);
-    VoiceOsc(VoiceOsc&&) noexcept = default;
-    VoiceOsc& operator=(VoiceOsc&&) noexcept = default;
-
-    std::unique_ptr<Voice> clone() const override;
-
-    Envelope& env() override;
-
-    void freq(float freq) override;
-    float freq() const override;
-
-    void vol(float vol) override;
-
-    void note_on(float freq) override;
-    void note_off() override;
-
-    bool is_on() const override;
-
-    void process(float sample_duration, float& output) override;
-
-private:
-    std::unique_ptr<Oscillator> m_osc;
-    std::unique_ptr<Envelope> m_env;
-    float m_freq;
-    float m_phase;
-    float m_vol;
-};
-
-/**
- * @brief An adaptor class for playing multiple voices in unison.
+ * @brief An adapter class for playing multiple voices in unison.
  * 
  */
 class VoiceMulti : public Voice
@@ -119,6 +80,48 @@ public:
 
 private:
     std::vector<std::unique_ptr<Voice>> m_voices;
+    std::unique_ptr<Envelope> m_env;
+    float m_freq;
+    float m_phase;
+    float m_vol;
+};
+
+/**
+ * @brief A voice based around an oscillator object, with a single velocity
+ * envelope.
+ */
+class VoiceOsc : public Voice
+{
+public:
+    explicit VoiceOsc(Oscillator& m_osc, Envelope& env, float freq = 440,
+                        float vol = 1.);
+    ~VoiceOsc() noexcept = default;
+    VoiceOsc(const VoiceOsc& other);
+    VoiceOsc& operator=(const VoiceOsc& other);
+    VoiceOsc(VoiceOsc&&) noexcept = default;
+    VoiceOsc& operator=(VoiceOsc&&) noexcept = default;
+
+    std::unique_ptr<Voice> clone() const override;
+
+    Envelope& env() override;
+
+    void freq(float freq) override;
+    float freq() const override;
+
+    void vol(float vol) override;
+
+    void note_on(float freq) override;
+    void note_off() override;
+
+    bool is_on() const override;
+
+    void process(float sample_duration, float& output) override;
+
+    void osc(Oscillator& osc);
+    Oscillator& osc();
+
+private:
+    std::unique_ptr<Oscillator> m_osc;
     std::unique_ptr<Envelope> m_env;
     float m_freq;
     float m_phase;
