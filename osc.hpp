@@ -7,7 +7,10 @@
 
 namespace MusicLib
 {
-    float osc_tri(float phase);
+    // Basic oscillator functions
+    float osc_saw(float phase);
+    float osc_square(float phase);
+    float osc_triangle(float phase);
 
     /**
      * @brief An oscillator interface. Used by the VoiceOsc class as the first
@@ -49,6 +52,29 @@ namespace MusicLib
         std::function<float(float)> m_osc_func;
     };
 
+    /**
+     * @brief A pulse oscillator.
+     */
+    class OscillatorPulse : public Oscillator
+    {
+    public:
+        explicit OscillatorPulse(float pulsewidth);
+        ~OscillatorPulse() noexcept = default;
+
+        std::shared_ptr<Oscillator> clone() const override;
+
+        float value(float phase) const override;
+
+        void pulsewidth(float pulsewidth);
+        float pulsewidth() const;        
+
+    private:
+        float m_pulsewidth;
+    };
+
+    /**
+     * @brief A wavetable oscillator.
+     */
     class OscillatorWavetable : public Oscillator
     {
     public:
