@@ -9,6 +9,11 @@ namespace MusicLib
 
     }
 
+    std::shared_ptr<WaveShaper> WaveShaperHardSync::clone() const
+    {
+        return std::make_shared<WaveShaperHardSync>(*this);
+    }
+
     float WaveShaperHardSync::value(float phase) const
     {
         float phase_mult = phase * m_ratio;

@@ -1,8 +1,10 @@
 #include "sequencer.hpp"
 #include "instrument.hpp"
+#include "command_stream.hpp"
 
 #include <portaudio.h>
-#include <iostream>
+#include <functional>
+// #include <iostream>
 
 // static void manage_error(PaError err)
 // {
@@ -14,72 +16,90 @@
 // }
 namespace MusicLib
 {
-    Sequencer::Sequencer(float bpm, unsigned int steps_per_beat,
-        unsigned int sample_rate, InstrumentManager& instrument_manager,
-        Sequence& sequence)
-    : m_sequence{sequence}
-    , m_cursor{0}
-    , m_instrument_manager{instrument_manager}
-    , m_bpm{bpm}
-    , m_steps_per_beat{steps_per_beat}
-    , m_step_duration{60.0f / (bpm * steps_per_beat)}
-    , m_sample_rate{sample_rate}
-    , m_samples_per_step{(unsigned long) (m_step_duration * sample_rate)}
-    , m_step_counter{0}
+    SequencerBasic::SequencerBasic(TimeManager& time_mgr, InstrumentManager& ins_mgr,
+            CommandStream& cmd_stream, CommandProcessor& cmd_processor)
+    : m_time_mgr{time_mgr}
+    , m_cmd_stream{cmd_stream}
+    , m_ins_mgr{ins_mgr}
+    , m_cmd_processor{cmd_processor}
     {
 
     }
 
-    void Sequencer::step()
+    void SequencerBasic::handle_sample()
     {
-        auto commands = m_sequence[m_cursor++ % m_sequence.size()];
-
-        for (auto it = commands.begin(); it != commands.end(); ++it)
+        if (m_time_mgr.count_sample())
         {
-            m_instrument_manager.instrument(0).note_on(it->first, it->second);
-            std::cout << "ins " << it->first << " freq " << it->second << std::endl;
-        }
-    }
-
-
-    float Sequencer::beat_duration()
-    {
-        return 60.0 / m_bpm;
-    }
-
-    void Sequencer::handle_sample()
-    {
-        m_step_counter++;
-
-        if (m_step_counter >= m_samples_per_step)
-        {
-            m_step_counter = 0;
             step();
         }
     }
 
-    const float& Sequencer::bpm() const
+    void SequencerBasic::step()
     {
-        return m_bpm;
-    }
-
-    float& Sequencer::bpm(float bpm)
-    {
-        if (bpm < 0)
-        {
-            return m_bpm;
-        }
+        Command& cmd = m_cmd_stream.current();
         
-        m_bpm = bpm;
-        m_step_duration = 60.0f / (bpm * m_steps_per_beat);
-        m_samples_per_step = (unsigned long) (m_step_duration * m_sample_rate);
-        // std::cout << m_step_duration << std::endl;
+        // Handle the command.
+        m_cmd_processor.handle_command_stream(cmd, m_cmd_stream);
+        m_cmd_processor.handle_instrument_manager(cmd, m_ins_mgr);
+        m_cmd_processor.handle_time_manager(cmd, m_time_mgr);
 
-        return m_bpm;
+        // Go to next command.
+        m_cmd_stream.step();
     }
 
-    Sequence& Sequencer::sequence()
+    SequencerMultiChannel::SequencerMultiChannel(TimeManager& time_mgr, InstrumentManager& ins_mgr, std::vector<CommandStream>& cmd_streams, CommandProcessor& cmd_processor)
+    : m_time_mgr{time_mgr}
+    , m_cmd_streams{cmd_streams}
+    , m_ins_mgr{ins_mgr}
+    , m_cmd_processor{cmd_processor}
     {
-        return m_sequence;
+
     }
+
+    void SequencerMultiChannel::handle_sample()
+    {
+        if (m_time_mgr.count_sample() == 0)
+        {
+            step();
+        }
+    }
+
+    void SequencerMultiChannel::step()
+    {
+        for (auto cs = m_cmd_streams.begin(); cs != m_cmd_streams.end(); ++cs)
+        {
+            Command cmd = cs->current();
+            
+            // Handle the command.
+            m_cmd_processor.handle_command_stream(cmd, *cs);
+            m_cmd_processor.handle_instrument_manager(cmd, m_ins_mgr);
+            m_cmd_processor.handle_time_manager(cmd, m_time_mgr);
+            
+            // Go to next command.
+            cs->step();
+        }
+    }
+
+    MultiSequencer::MultiSequencer(std::vector<Sequencer>& seqs)
+    : m_seqs{seqs}
+    {
+
+    }
+
+    void MultiSequencer::handle_sample()
+    {
+        for (auto seq = m_seqs.begin(); seq != m_seqs.end(); ++seq)
+        {
+            seq->handle_sample();
+        }
+    }
+
+    void MultiSequencer::step()
+    {
+        for (auto seq = m_seqs.begin(); seq != m_seqs.end(); ++seq)
+        {
+            seq->step();
+        }
+    }
+
 }

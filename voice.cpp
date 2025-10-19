@@ -1,11 +1,13 @@
+#include "envelope.hpp"
+#include "osc.hpp"
 #include "voice.hpp"
 
 #include <memory>
 namespace MusicLib
 {
-    VoiceOsc::VoiceOsc(Oscillator& osc, Envelope env, float freq, float vol)
+    VoiceOsc::VoiceOsc(Oscillator& osc, Envelope& env, float freq, float vol)
     : m_osc{osc.clone()}
-    , m_env{env}
+    , m_env{env.clone()}
     , m_freq{freq}
     , m_phase{0}
     , m_vol{vol}
@@ -18,12 +20,17 @@ namespace MusicLib
 
     Envelope& VoiceOsc::env()
     {
-        return m_env;
+        return *m_env;
     }
 
     void VoiceOsc::freq(float freq)
     {
         m_freq = freq;
+    }
+
+    float VoiceOsc::freq() const
+    {
+        return m_freq;
     }
 
     void VoiceOsc::vol(float vol)
@@ -40,22 +47,22 @@ namespace MusicLib
         }
 
         m_freq = freq;
-        m_env.trig(true);
+        m_env->trig(true);
     }
 
     void VoiceOsc::note_off()
     {
-        m_env.trig(false);
+        m_env->trig(false);
     }
 
     bool VoiceOsc::is_on() const
     {
-        return m_env.is_on();
+        return m_env->is_on();
     }
 
     float VoiceOsc::process(float sample_time)
     {
-        float sample = m_vol * m_osc->value(m_phase) * m_env.process(sample_time);
+        float sample = m_vol * m_osc->value(m_phase) * m_env->process(sample_time);
 
         // Propagate phase.
         m_phase += sample_time * m_freq;
@@ -68,9 +75,9 @@ namespace MusicLib
         return sample;
     }
 
-    VoiceMulti::VoiceMulti(std::vector<std::shared_ptr<Voice>>& voices, Envelope env, float freq, float vol)
+    VoiceMulti::VoiceMulti(std::vector<std::shared_ptr<Voice>>& voices, Envelope& env, float freq, float vol)
     : m_voices{voices}
-    , m_env{env}
+    , m_env{env.clone()}
     , m_freq{freq}
     , m_phase{0}
     , m_vol{vol}
@@ -78,17 +85,22 @@ namespace MusicLib
 
     std::shared_ptr<Voice> VoiceMulti::clone() const
     {
-        return std::make_shared<VoiceOsc>(*this);
+        return std::make_shared<VoiceMulti>(*this);
     }
 
     Envelope& VoiceMulti::env()
     {
-        return m_env;
+        return *m_env;
     }
 
     void VoiceMulti::freq(float freq)
     {
         m_freq = freq;
+    }
+
+    float VoiceMulti::freq() const
+    {
+        return m_freq;
     }
 
     void VoiceMulti::vol(float vol)
@@ -105,7 +117,7 @@ namespace MusicLib
         }
 
         m_freq = freq;
-        m_env.trig(true);
+        m_env->trig(true);
 
         for (size_t i=0; i < m_voices.size(); ++i)
         {
@@ -116,7 +128,7 @@ namespace MusicLib
 
     void VoiceMulti::note_off()
     {
-        m_env.trig(false);
+        m_env->trig(false);
 
         for (size_t i=0; i < m_voices.size(); ++i)
         {
@@ -126,7 +138,7 @@ namespace MusicLib
 
     bool VoiceMulti::is_on() const
     {
-        return m_env.is_on();
+        return m_env->is_on();
     }
 
     float VoiceMulti::process(float sample_time)

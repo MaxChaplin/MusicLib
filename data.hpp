@@ -6,11 +6,12 @@
 
 namespace MusicLib
 {
-    struct AudioData
-    {};
-
-    struct GuiData
-    {};
+    struct PortAudioData
+    {
+        Sequencer& seq;
+        InstrumentManager& ins_mgr;
+        float time_element;
+    };
 }
 
 #endif // DATA_H_
