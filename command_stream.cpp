@@ -10,11 +10,12 @@ namespace MusicLib
     : m_commands{commands}
     , m_cursor{0}
     , m_looping{looping}
+    , m_finished{false}
     {
 
     }
 
-    CommandStreamBasic::~CommandStreamBasic() noexcept = default;
+    // CommandStreamBasic::~CommandStreamBasic() noexcept = default;
 
     Command& CommandStreamBasic::current()
     {
@@ -33,6 +34,10 @@ namespace MusicLib
             {
                 m_cursor = 0;
             }
+            else
+            {
+                m_finished = true;
+            }
         }
 
         return m_cursor;
@@ -40,21 +45,29 @@ namespace MusicLib
 
     void CommandStreamBasic::cursor(unsigned long cursor)
     {
-        if (cursor <= m_commands.size())
+        if (cursor < m_commands.size())
         {
             m_cursor = cursor;
-        }       
+        }
+
+        m_finished = cursor >= m_commands.size() - 1;
+    }
+
+    bool CommandStreamBasic::finished()
+    {
+        return m_finished;
     }
 
     CommandStreamInstrument::CommandStreamInstrument(std::vector<std::shared_ptr<Command>> commands, Instrument& ins, bool looping)
     : m_commands{commands}
     , m_looping{looping}
-    , m_ins{std::make_shared<Instrument>(ins)}
+    , m_finished{false}
+    , m_ins{ins}
     {
 
     }
 
-    CommandStreamInstrument::~CommandStreamInstrument() noexcept = default;
+    // CommandStreamInstrument::~CommandStreamInstrument() noexcept = default;
 
     Command& CommandStreamInstrument::current()
     {
@@ -73,6 +86,10 @@ namespace MusicLib
             {
                 m_cursor = 0;
             }
+            else
+            {
+                m_finished = true;
+            }
         }
 
         return m_cursor;
@@ -80,17 +97,27 @@ namespace MusicLib
 
     void CommandStreamInstrument::cursor(unsigned long cursor)
     {
-        m_cursor = cursor;
+        if (cursor < m_commands.size())
+        {
+            m_cursor = cursor;
+        }
+
+        m_finished = cursor >= m_commands.size() - 1;
+    }
+
+    bool CommandStreamInstrument::finished()
+    {
+        return m_finished;
     }
 
     void CommandStreamInstrument::instrument(Instrument& ins)
     {
-        m_ins = std::make_shared<Instrument>(ins);
+        m_ins = ins;
     }
 
     Instrument& CommandStreamInstrument::instrument()
     {
-        return *m_ins;
+        return m_ins;
     }
 
 }

@@ -25,6 +25,7 @@ namespace MusicLib
         virtual Command& current() = 0;
         virtual unsigned long step() = 0;
         virtual void cursor(unsigned long index) = 0;
+        virtual bool finished() = 0;
     };
 
     /**
@@ -36,16 +37,18 @@ namespace MusicLib
     {
     public:
         explicit CommandStreamBasic(std::vector<std::shared_ptr<Command>>& commands, bool looping = false);
-        ~CommandStreamBasic();
+        ~CommandStreamBasic() noexcept = default;
 
         Command& current() override;
         unsigned long step() override;
         void cursor(unsigned long cursor) override;
+        bool finished() override;
 
     private:
         std::vector<std::shared_ptr<Command>> m_commands;
         unsigned long m_cursor;
         bool m_looping;
+        bool m_finished;
     };
 
     /**
@@ -57,11 +60,12 @@ namespace MusicLib
     public:
         explicit CommandStreamInstrument(std::vector<std::shared_ptr<Command>> commands,
             Instrument& ins, bool looping = false);
-        ~CommandStreamInstrument();
+        ~CommandStreamInstrument() noexcept = default;
 
         Command& current() override;
         unsigned long step() override;
         void cursor(unsigned long cursor) override;
+        bool finished() override;
 
         void instrument(Instrument& ins);
         Instrument& instrument();
@@ -70,6 +74,7 @@ namespace MusicLib
         std::vector<std::shared_ptr<Command>> m_commands;
         unsigned long m_cursor;
         bool m_looping;
+        bool m_finished;
 
         std::reference_wrapper<Instrument> m_ins;
     };
