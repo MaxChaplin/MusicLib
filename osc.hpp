@@ -36,6 +36,32 @@ public:
 };
 
 /**
+ * @brief An oscillator class that can be switched between multiple given
+ *        oscillators.
+ */
+class OscillatorSwitch : public Oscillator
+{
+public:
+    explicit OscillatorSwitch(unsigned int osc_index = 0);
+    explicit OscillatorSwitch(std::vector<std::unique_ptr<Oscillator>>& oscs, unsigned int osc_index = 0);
+    explicit OscillatorSwitch(const OscillatorSwitch& other);
+    OscillatorSwitch& operator=(const OscillatorSwitch& other);
+    ~OscillatorSwitch() noexcept = default;
+
+    std::unique_ptr<Oscillator> clone() const override;
+
+    float value(float phase) const override;
+
+    void add_osc(Oscillator& osc);
+    void select(unsigned int osc_index);
+
+private:
+    std::vector<std::unique_ptr<Oscillator>> m_oscs;
+    unsigned int m_osc_index;
+};
+
+
+/**
  * @brief The simplest oscillator, revolving around a single pure function.
  */
 class OscillatorBasic : public Oscillator
