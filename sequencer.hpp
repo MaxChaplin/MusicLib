@@ -44,6 +44,33 @@ public:
 };
 
 /**
+ * @brief Runs multiple sequencers in parallel, each of which handles its own
+ * time.
+ * 
+ */
+class MultiSequencer : public Sequencer
+{
+public:
+    explicit MultiSequencer(std::vector<Sequencer>& seqs);
+    ~MultiSequencer() noexcept = default;
+
+    /**
+     * @brief Call the tick() method of each of the sequencers.
+     * 
+     */
+    void tick() override;
+
+    /**
+     * @brief Perform a step in each of the sequencers. This function is
+     *        only here for completeness.
+     */
+    void step() override;
+
+private:
+    std::vector<Sequencer>& m_seqs;
+};
+
+/**
  * @brief A simple sequencer class - one time manager, one command stream,
  * performs actions once a step.
  */
@@ -96,33 +123,6 @@ private:
     std::vector<CommandStream>& m_cmd_streams;
     std::reference_wrapper<InstrumentManager> m_ins_mgr;
     CommandProcessor& m_cmd_processor;
-};
-
-/**
- * @brief An adaptor class that runs multiple sequencers in parallel, each
- *        with its own timekeeping method.
- * 
- */
-class MultiSequencer : public Sequencer
-{
-public:
-    explicit MultiSequencer(std::vector<Sequencer>& seqs);
-    ~MultiSequencer() noexcept = default;
-
-    /**
-     * @brief Call the tick() method of each of the sequencers.
-     * 
-     */
-    void tick() override;
-
-    /**
-     * @brief Perform a step in each of the sequencers. This function is
-     *        only here for completeness.
-     */
-    void step() override;
-
-private:
-    std::vector<Sequencer>& m_seqs;
 };
 
 }
