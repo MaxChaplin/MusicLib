@@ -16,114 +16,115 @@
 using Command = std::pair<size_t, float>;
 using Sequence = std::vector<std::vector<Command>>;
 
-namespace MusicLib
+namespace MusicLib {
+    
+/**
+ * @brief A sequencer interface that can be called from the audio engine
+ * callback.
+ * 
+ */
+class Sequencer
 {
+public:
+    Sequencer() = default;
+    virtual ~Sequencer() = default;
+
     /**
-     * @brief A sequencer interface that can be called from the audio engine
-     * callback.
+     * @brief A method to call from the audio engine callback for every
+     * sample, to handle the progression of the track in time.
+     */
+    virtual void tick() = 0;
+
+    /**
+     * @brief Perform a single step in the arrangement.
+     * Generally called from tick(), but kept public for the option
+     * to progress the track manually.
+     */
+    virtual void step() = 0;
+};
+
+/**
+ * @brief A simple sequencer class - one time manager, one command stream,
+ * performs actions once a step.
+ */
+class SequencerBasic : public Sequencer
+{
+public:
+    explicit SequencerBasic(TimeManager& time_mgr,
+        InstrumentManager& ins_mgr,
+        CommandStream& cmd_stream,
+        CommandProcessor& cmd_processor);
+    ~SequencerBasic() noexcept = default;
+
+    void tick() override;
+
+    /**
+     * @brief Receive a command from the command stream, call the command
+     * processor's handlers to execute it and progress the command stream
+     * one step.
+     */
+    void step() override;
+
+private:
+    TimeManager& m_time_mgr;
+    CommandStream& m_cmd_stream;
+    std::reference_wrapper<InstrumentManager> m_ins_mgr;
+    CommandProcessor& m_cmd_processor;
+};
+
+/**
+ * @brief A sequencer that can hold multiple command streams and play them
+ * in parallel.
+ */
+class SequencerMultiChannel : public Sequencer
+{
+public:
+    explicit SequencerMultiChannel(TimeManager& time_mgr, InstrumentManager& ins_mgr,
+        std::vector<CommandStream>& cmd_streams, CommandProcessor& cmd_processor);
+    ~SequencerMultiChannel() noexcept = default;
+
+    void tick() override;
+
+    /**
+     * @brief Receive and execute a command from each of the command
+     *        streams.
+     */
+    void step() override;
+
+private:
+    TimeManager& m_time_mgr;
+    std::vector<CommandStream>& m_cmd_streams;
+    std::reference_wrapper<InstrumentManager> m_ins_mgr;
+    CommandProcessor& m_cmd_processor;
+};
+
+/**
+ * @brief An adaptor class that runs multiple sequencers in parallel, each
+ *        with its own timekeeping method.
+ * 
+ */
+class MultiSequencer : public Sequencer
+{
+public:
+    explicit MultiSequencer(std::vector<Sequencer>& seqs);
+    ~MultiSequencer() noexcept = default;
+
+    /**
+     * @brief Call the tick() method of each of the sequencers.
      * 
      */
-    class Sequencer
-    {
-    public:
-        Sequencer() = default;
-        virtual ~Sequencer() = default;
-
-        /**
-         * @brief A method to call from the audio engine callback for every
-         * sample, to handle the progression of the track in time.
-         */
-        virtual void handle_sample() = 0;
-
-        /**
-         * @brief Perform a single step in the arrangement.
-         * Generally called from handle_sample(), but kept public for the option
-         * to progress the track manually.
-         */
-        virtual void step() = 0;
-    };
+    void tick() override;
 
     /**
-     * @brief A simple sequencer class - one time manager, one command stream,
-     * performs actions once a step.
+     * @brief Perform a step in each of the sequencers. This function is
+     *        only here for completeness.
      */
-    class SequencerBasic : public Sequencer
-    {
-    public:
-        explicit SequencerBasic(TimeManager& time_mgr,
-            InstrumentManager& ins_mgr,
-            CommandStream& cmd_stream,
-            CommandProcessor& cmd_processor);
-        ~SequencerBasic() noexcept = default;
+    void step() override;
 
-        void handle_sample() override;
+private:
+    std::vector<Sequencer>& m_seqs;
+};
 
-        /**
-         * @brief Receive a command from the command stream, call the command
-         * processor's handlers to execute it and progress the command stream
-         * one step.
-         */
-        void step() override;
-
-    private:
-        TimeManager& m_time_mgr;
-        CommandStream& m_cmd_stream;
-        std::reference_wrapper<InstrumentManager> m_ins_mgr;
-        CommandProcessor& m_cmd_processor;
-    };
-
-    /**
-     * @brief A sequencer that can hold multiple command streams and play them
-     * in parallel.
-     */
-    class SequencerMultiChannel : public Sequencer
-    {
-    public:
-        explicit SequencerMultiChannel(TimeManager& time_mgr, InstrumentManager& ins_mgr,
-            std::vector<CommandStream>& cmd_streams, CommandProcessor& cmd_processor);
-        ~SequencerMultiChannel() noexcept = default;
-
-        void handle_sample() override;
-
-        /**
-         * @brief Receive and execute a command from each of the command
-         *        streams.
-         */
-        void step() override;
-
-    private:
-        TimeManager& m_time_mgr;
-        std::vector<CommandStream>& m_cmd_streams;
-        std::reference_wrapper<InstrumentManager> m_ins_mgr;
-        CommandProcessor& m_cmd_processor;
-    };
-
-    /**
-     * @brief An adaptor class that runs multiple sequencers in parallel, each
-     *        with its own timekeeping method.
-     * 
-     */
-    class MultiSequencer : public Sequencer
-    {
-    public:
-        explicit MultiSequencer(std::vector<Sequencer>& seqs);
-        ~MultiSequencer() noexcept = default;
-
-        /**
-         * @brief Call the handle_sample() method of each of the sequencers.
-         * 
-         */
-        void handle_sample() override;
-
-        /**
-         * @brief Perform a step in each of the sequencers. This function is
-         *        only here for completeness.
-         */
-        void step() override;
-
-    private:
-        std::vector<Sequencer>& m_seqs;
-    };  
 }
 
 #endif // SEQUENCER_H_
