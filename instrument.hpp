@@ -20,8 +20,6 @@ public:
     Instrument(Instrument&&) noexcept = default;
     Instrument& operator=(Instrument&&) noexcept = default;
 
-    Voice& voice(size_t num);
-
     void process(float sample_duration, float& out_left, float& out_right);
 
     void note_on(unsigned int voice_num, float freq);
@@ -35,6 +33,26 @@ public:
     float pan() const;
 
     void retrigger(bool retrigger);
+
+    Voice& voice(size_t index);
+
+    /**
+     * @brief Call a given method of each of the voices.
+     * 
+     * @tparam V concrete derived class of Voice
+     * @tparam M 
+     * @tparam Args 
+     * @param method pointer to a method that V has (example: &VoiceOsc::freq)
+     * @param args arguments for the method, if there are any
+     */
+    template <typename V, typename M, typename... Args>
+    void call_all_voices(M method, Args&&... args)
+    {
+        for (auto& v : m_voices)
+        {
+            (static_cast<V*>(v.get())->*method)(std::forward<Args>(args)...);
+        }
+    }
 
 private:
     std::vector<std::unique_ptr<Voice>> m_voices;
