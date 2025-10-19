@@ -10,6 +10,11 @@
 
 namespace MusicLib
 {
+    /**
+     * @brief An interface for the primary component of an instrument, where the
+     * synthesis is implemented. Typically monophonic, with polyphony
+     * implemented by having the instrument hold multiple objects.
+     */
     class Voice
     {
     public:
@@ -30,13 +35,25 @@ namespace MusicLib
 
         virtual bool is_on() const = 0;
 
+        /**
+         * @brief Progress the voice's audio signal a single sample.
+         * 
+         * @param sample_time The length of a sample in seconds (the inverse 
+         * of the sample rate).
+         * @return A sample. 
+         */
         virtual float process(float sample_time) = 0;
     };
 
+    /**
+     * @brief A voice based around an oscillator object, with a single velocity
+     * envelope.
+     */
     class VoiceOsc : public Voice
     {
     public:
-        explicit VoiceOsc(Oscillator& m_osc, Envelope& env, float freq = 440, float vol = 1.);
+        explicit VoiceOsc(Oscillator& m_osc, Envelope& env, float freq = 440,
+                          float vol = 1.);
         ~VoiceOsc() noexcept = default;
 
         std::shared_ptr<Voice> clone() const override;
@@ -63,15 +80,22 @@ namespace MusicLib
         float m_vol;
     };
 
+    /**
+     * @brief An adaptor class for playing multiple voices in unison.
+     * 
+     */
     class VoiceMulti : public Voice
     {
     public:
-        explicit VoiceMulti(std::vector<std::shared_ptr<Voice>>& voices, Envelope& env, float freq = 440, float vol = 1.);
+        explicit VoiceMulti(std::vector<std::shared_ptr<Voice>>& voices,
+                            Envelope& env, float freq = 440, float vol = 1.);
         ~VoiceMulti() noexcept = default;
 
         std::shared_ptr<Voice> clone() const override;
 
         Envelope& env() override;
+
+        Voice& voice(size_t num);
 
         void freq(float m_freq) override;
         float freq() const override;
@@ -93,10 +117,16 @@ namespace MusicLib
         float m_vol;
     };
 
+    /**
+     * @brief The simplest FM synth.
+     * 
+     */
     class VoiceFM2 : public Voice
     {
     public:
-        explicit VoiceFM2(Voice& carrier, Voice& modulator, Envelope env, float freq1 = 440, float freq2 = 440, float fm_level = 0, float vol = 1., unsigned int oversamping = 1);
+        explicit VoiceFM2(Oscillator& carrier, Oscillator& modulator, Envelope& env,
+            float freq_carrier = 440, float freq_modulator = 440,
+            float fm_level = 0, float vol = 1., unsigned int oversamping = 1);
         ~VoiceFM2() noexcept = default;
 
         std::shared_ptr<Voice> clone() const override;
@@ -116,8 +146,8 @@ namespace MusicLib
         float process(float sample_time) override;
 
     private:
-        std::shared_ptr<Voice> m_carrier;
-        std::shared_ptr<Voice> m_modulator;
+        std::shared_ptr<Oscillator> m_carrier;
+        std::shared_ptr<Oscillator> m_modulator;
         std::shared_ptr<Envelope> m_env;
 
         float m_freq;
@@ -127,10 +157,16 @@ namespace MusicLib
         unsigned int m_oversamping;
     };
 
+    /**
+     * @brief A phase distortion synth. Passes the oscillator's phase parameter
+     * through distortion function, which causes the wave shape to get
+     * distorted.
+     */
     class VoicePD : public Voice
     {
     public:
-        explicit VoicePD(Oscillator& m_osc, WaveShaper& phase_func, Envelope env, float freq = 440, float vol = 1.);
+        explicit VoicePD(Oscillator& m_osc, WaveShaper& phase_func,
+            Envelope& env, float freq = 440, float vol = 1.);
         ~VoicePD() noexcept = default;
 
         std::shared_ptr<Voice> clone() const override;
