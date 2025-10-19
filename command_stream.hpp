@@ -22,7 +22,9 @@ public:
     CommandStream() = default;
     virtual ~CommandStream() = default;
 
-    virtual Command& current() = 0;
+    virtual void add(Command& command) = 0;
+
+    virtual Command* current() = 0;
     virtual unsigned long step() = 0;
     virtual void cursor(unsigned long index) = 0;
     virtual bool finished() = 0;
@@ -36,19 +38,25 @@ public:
 class CommandStreamBasic : public CommandStream
 {
 public:
-    explicit CommandStreamBasic(std::vector<std::shared_ptr<Command>>& commands, bool looping = false);
+    explicit CommandStreamBasic(bool looping = false);
+    explicit CommandStreamBasic(std::vector<std::unique_ptr<Command>>& commands, bool looping = false);
     ~CommandStreamBasic() noexcept = default;
+    CommandStreamBasic(const CommandStreamBasic& other);
+    CommandStreamBasic& operator=(const CommandStreamBasic& other);
+    CommandStreamBasic(CommandStreamBasic&&) noexcept = default;
+    CommandStreamBasic& operator=(CommandStreamBasic&&) noexcept = default;
 
-    Command& current() override;
+    void add(Command& command) override;
+
+    Command* current() override;
     unsigned long step() override;
     void cursor(unsigned long cursor) override;
     bool finished() override;
 
 private:
-    std::vector<std::shared_ptr<Command>> m_commands;
+    std::vector<std::unique_ptr<Command>> m_commands;
     unsigned long m_cursor;
     bool m_looping;
-    bool m_finished;
 };
 
 /**
@@ -58,11 +66,17 @@ private:
 class CommandStreamInstrument : public CommandStream
 {
 public:
-    explicit CommandStreamInstrument(std::vector<std::shared_ptr<Command>> commands,
-        Instrument& ins, bool looping = false);
+    explicit CommandStreamInstrument(Instrument& ins, bool looping = false);
+    explicit CommandStreamInstrument(std::vector<std::unique_ptr<Command>>& commands, Instrument& ins, bool looping = false);
     ~CommandStreamInstrument() noexcept = default;
+    CommandStreamInstrument(const CommandStreamInstrument& other);
+    CommandStreamInstrument& operator=(const CommandStreamInstrument& other);
+    CommandStreamInstrument(CommandStreamInstrument&&) noexcept = default;
+    CommandStreamInstrument& operator=(CommandStreamInstrument&&) noexcept = default;
 
-    Command& current() override;
+    void add(Command& command) override;
+
+    Command* current() override;
     unsigned long step() override;
     void cursor(unsigned long cursor) override;
     bool finished() override;
@@ -71,10 +85,9 @@ public:
     Instrument& instrument();
 
 private:
-    std::vector<std::shared_ptr<Command>> m_commands;
+    std::vector<std::unique_ptr<Command>> m_commands;
     unsigned long m_cursor;
     bool m_looping;
-    bool m_finished;
 
     std::reference_wrapper<Instrument> m_ins;
 };
