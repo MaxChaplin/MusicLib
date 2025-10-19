@@ -3,6 +3,7 @@
 #include "voice.hpp"
 
 #include <memory>
+
 namespace MusicLib
 {
     VoiceOsc::VoiceOsc(Oscillator& osc, Envelope& env, float freq, float vol)
@@ -13,9 +14,32 @@ namespace MusicLib
     , m_vol{vol}
     {}
 
-    std::shared_ptr<Voice> VoiceOsc::clone() const
+    VoiceOsc::VoiceOsc(const VoiceOsc& other)
+    : m_osc{other.m_osc->clone()}
+    , m_env{other.m_env->clone()}
+    , m_freq{other.m_freq}
+    , m_phase{other.m_phase}
+    , m_vol{other.m_vol}
     {
-        return std::make_shared<VoiceOsc>(*this);
+
+    }
+
+    VoiceOsc& VoiceOsc::operator=(const VoiceOsc& other)
+    {
+        if (this != &other)
+        {
+            m_osc = other.m_osc->clone();
+            m_env = other.m_env->clone();
+            m_freq = other.m_freq;
+            m_phase = other.m_phase;
+            m_vol = other.m_vol;
+        }
+        return *this;
+    }
+
+    std::unique_ptr<Voice> VoiceOsc::clone() const
+    {
+        return std::make_unique<VoiceOsc>(*m_osc, *m_env, m_freq, m_vol);
     }
 
     Envelope& VoiceOsc::env()
@@ -72,17 +96,53 @@ namespace MusicLib
         }
     }
 
-    VoiceMulti::VoiceMulti(std::vector<std::shared_ptr<Voice>>& voices, Envelope& env, float freq, float vol)
-    : m_voices{voices}
+    VoiceMulti::VoiceMulti(std::vector<std::unique_ptr<Voice>>& voices, Envelope& env, float freq, float vol)
+    : m_voices{}
     , m_env{env.clone()}
     , m_freq{freq}
     , m_phase{0}
     , m_vol{vol}
-    {}
-
-    std::shared_ptr<Voice> VoiceMulti::clone() const
     {
-        return std::make_shared<VoiceMulti>(*this);
+        for (const auto& v : voices)
+        {
+            m_voices.emplace_back(v->clone());
+        }
+    }
+
+    VoiceMulti::VoiceMulti(const VoiceMulti& other)
+    : m_voices{}
+    , m_env{other.m_env->clone()}
+    , m_freq{other.m_freq}
+    , m_phase{other.m_phase}
+    , m_vol{other.m_vol}
+    {
+        for (const auto& v : other.m_voices)
+        {
+            m_voices.emplace_back(v->clone());
+        }
+    }
+
+    VoiceMulti& VoiceMulti::operator=(const VoiceMulti& other)
+    {
+        if (this != &other)
+        {
+            m_voices = std::vector<std::unique_ptr<Voice>>{};
+            for (const auto& v : other.m_voices)
+            {
+                m_voices.emplace_back(v->clone());
+            }
+
+            m_env = other.m_env->clone();
+            m_freq = other.m_freq;
+            m_phase = other.m_phase;
+            m_vol = other.m_vol;
+        }
+        return *this;
+    }
+
+    std::unique_ptr<Voice> VoiceMulti::clone() const
+    {
+        return std::make_unique<VoiceMulti>(*this);
     }
 
     Envelope& VoiceMulti::env()
@@ -117,7 +177,7 @@ namespace MusicLib
         m_env->trig(true);
 
         // for (size_t i=0; i < m_voices.size(); ++i)
-        for (auto v : m_voices)
+        for (auto& v : m_voices)
         {
             v->freq(freq);
             v->env().trig(true);
@@ -129,7 +189,7 @@ namespace MusicLib
         m_env->trig(false);
 
         // for (size_t i=0; i < m_voices.size(); ++i)
-        for (auto v : m_voices)
+        for (auto& v : m_voices)
         {
             v->env().trig(false);
         }
@@ -144,7 +204,7 @@ namespace MusicLib
     {
         output = 0;
         // for (size_t i=0; i < m_voices.size(); ++i)
-        for (auto v : m_voices)
+        for (auto& v : m_voices)
         {
             float temp;
             v->process(sample_time, temp);

@@ -46,7 +46,7 @@ namespace MusicLib
 
         // Open an audio I/O stream.
         err = Pa_OpenDefaultStream(&stream, 0, 2, paFloat32, m_sample_rate,
-                                m_buffer_size, m_callback, &m_callback_data);
+            m_buffer_size, m_callback, &m_callback_data);
         manage_error(err);
 
         err = Pa_StartStream(stream);

@@ -11,7 +11,7 @@ namespace MusicLib
         Envelope() = default;
         virtual ~Envelope() = default;
 
-        virtual std::shared_ptr<Envelope> clone() const = 0;
+        virtual std::unique_ptr<Envelope> clone() const = 0;
 
         virtual void trig(bool is_on) = 0;
         virtual float process(float time) = 0;
@@ -27,7 +27,7 @@ namespace MusicLib
         explicit EnvelopeZero();
         ~EnvelopeZero() noexcept = default;
 
-        std::shared_ptr<Envelope> clone() const override;
+        std::unique_ptr<Envelope> clone() const override;
 
         void trig(bool is_on) override;
         float process(float time) override;
@@ -46,7 +46,7 @@ namespace MusicLib
         explicit EnvelopeADSR(float attack = .01, float decay = 1, float sustain = 1, float release = .01, bool is_retrigger = true);
         ~EnvelopeADSR() noexcept = default;
 
-        std::shared_ptr<Envelope> clone() const override;
+        std::unique_ptr<Envelope> clone() const override;
 
         float attack() const;
         void attack(float attack);
