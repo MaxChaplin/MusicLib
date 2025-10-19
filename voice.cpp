@@ -15,7 +15,7 @@ VoiceMulti::VoiceMulti(std::vector<std::unique_ptr<Voice>>& voices, Envelope& en
 {
     for (const auto& v : voices)
     {
-        m_voices.emplace_back(v->clone());
+        m_voices.push_back(v->clone());
     }
 }
 
@@ -26,9 +26,11 @@ VoiceMulti::VoiceMulti(const VoiceMulti& other)
 , m_phase{other.m_phase}
 , m_vol{other.m_vol}
 {
+    m_voices.reserve(other.m_voices.size());
+
     for (const auto& v : other.m_voices)
     {
-        m_voices.emplace_back(v->clone());
+        m_voices.push_back(v->clone());
     }
 }
 
@@ -36,10 +38,10 @@ VoiceMulti& VoiceMulti::operator=(const VoiceMulti& other)
 {
     if (this != &other)
     {
-        m_voices = std::vector<std::unique_ptr<Voice>>{};
+        m_voices.clear();
         for (const auto& v : other.m_voices)
         {
-            m_voices.emplace_back(v->clone());
+            m_voices.push_back(v->clone());
         }
 
         m_env = other.m_env->clone();

@@ -25,9 +25,11 @@ Instrument::Instrument(const Instrument& other)
 , m_pan{other.m_pan}
 , m_retrigger{other.m_retrigger}
 {
+    m_voices.reserve(other.m_voices.size());
+
     for (const auto& v : other.m_voices)
     {
-        m_voices.emplace_back(v->clone());
+        m_voices.push_back(v->clone());
     }
 }
 
@@ -35,10 +37,12 @@ Instrument& Instrument::operator=(const Instrument& other)
 {
     if (this != &other)
     {
-        m_voices = std::vector<std::unique_ptr<Voice>>{};
+        m_voices.clear();
+        m_voices.reserve(other.m_voices.size());
+
         for (const auto& v : other.m_voices)
         {
-            m_voices.emplace_back(v->clone());
+            m_voices.push_back(v->clone());
         }
 
         m_vol = other.m_vol;
@@ -47,11 +51,6 @@ Instrument& Instrument::operator=(const Instrument& other)
     }
     return *this;
 }
-
-// Voice& Instrument::voice(size_t num)
-// {
-//     return *m_voices[num];
-// }
 
 void Instrument::process(float sample_duration, float& out_left, float& out_right)
 {
