@@ -19,19 +19,23 @@ namespace MusicLib
         return m_instruments[num];
     }
 
-    void InstrumentManager::add_instrument(Instrument& instrument)
+    void InstrumentManager::clone_instrument(Instrument instrument)
     {
         m_instruments.push_back(instrument);
     }
 
-    float InstrumentManager::process(float time_element)
+    void InstrumentManager::process(float sample_time, float& out_left, float& out_right)
     {
-        float sample = 0;
-        for (auto it = m_instruments.begin(); it != m_instruments.end(); ++it)
-        {
-            sample += it->process(time_element);
-        }
+        float temp_left, temp_right;
 
-        return sample;
+        out_left = 0;
+        out_right = 0;
+        // for (auto it = m_instruments.begin(); it != m_instruments.end(); ++it)
+        for (auto ins : m_instruments)
+        {
+            ins.process(sample_time, temp_left, temp_right);
+            out_left += temp_left;
+            out_right += temp_right;
+        }
     }
 }

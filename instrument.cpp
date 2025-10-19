@@ -5,9 +5,10 @@
 
 namespace MusicLib
 {
-    Instrument::Instrument(Voice& voice, unsigned int polyphony, float vol, bool retrigger)
+    Instrument::Instrument(Voice& voice, unsigned int polyphony, float vol, float pan, bool retrigger)
     : m_voices{std::vector<std::shared_ptr<Voice>>{}}
     , m_vol{vol}
+    , m_pan{pan}
     , m_retrigger{retrigger}
     {
         m_voices.reserve(polyphony);
@@ -23,18 +24,25 @@ namespace MusicLib
         return *m_voices[num];
     }
 
-    float Instrument::process(float sample_time)
+    void Instrument::process(float sample_time, float& out_left, float& out_right)
     {
-        float sample = 0;
-        for (size_t i=0; i < m_voices.size(); ++i)
+        out_left = 0;
+        out_right = 0;
+
+        // for (size_t i=0; i < m_voices.size(); ++i)
+        for (auto v : m_voices)
         {
-            if (m_voices[i]->is_on())
+            if (v->is_on())
             {
-                sample += m_vol * m_voices[i]->process(sample_time);
+                float temp;
+                v->process(sample_time, temp);
+                out_left += m_vol * temp;
             }
         }
 
-        return sample;
+        // Pan
+        out_right = out_left * m_pan;
+        out_left *= 1 - m_pan;
     }
 
     void Instrument::note_on(unsigned int voice_num, float freq)
@@ -68,6 +76,21 @@ namespace MusicLib
     void Instrument::vol(float vol)
     {
         m_vol = vol;
+    }
+
+    float Instrument::vol() const
+    {
+        return m_vol;
+    }
+
+    void Instrument::pan(float pan)
+    {
+        m_pan = pan;
+    }
+
+    float Instrument::pan() const
+    {
+        return m_pan;
     }
 
     void Instrument::retrigger(bool retrigger)

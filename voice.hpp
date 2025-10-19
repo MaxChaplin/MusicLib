@@ -40,9 +40,9 @@ namespace MusicLib
          * 
          * @param sample_time The length of a sample in seconds (the inverse 
          * of the sample rate).
-         * @return A sample. 
+         * @param output 
          */
-        virtual float process(float sample_time) = 0;
+        virtual void process(float sample_time, float& output) = 0;
     };
 
     /**
@@ -60,17 +60,17 @@ namespace MusicLib
 
         Envelope& env() override;
 
-        void freq(float m_freq) override;
+        void freq(float freq) override;
         float freq() const override;
 
-        void vol(float m_vol) override;
+        void vol(float vol) override;
 
         void note_on(float freq) override;
         void note_off() override;
 
         bool is_on() const override;
 
-        float process(float sample_time) override;
+        void process(float sample_time, float& output) override;
 
     private:
         std::shared_ptr<Oscillator> m_osc;
@@ -107,7 +107,7 @@ namespace MusicLib
 
         bool is_on() const override;
 
-        float process(float sample_time) override;
+        void process(float sample_time, float& output) override;
 
     private:
         std::vector<std::shared_ptr<Voice>> m_voices;
@@ -143,7 +143,7 @@ namespace MusicLib
 
         bool is_on() const override;
 
-        float process(float sample_time) override;
+        void process(float sample_time, float& output) override;
 
     private:
         std::shared_ptr<Oscillator> m_carrier;
@@ -173,17 +173,17 @@ namespace MusicLib
 
         Envelope& env() override;
 
-        void freq(float m_freq) override;
+        void freq(float freq) override;
         float freq() const override;
         
-        void vol(float m_vol) override;
+        void vol(float vol) override;
 
         void note_on(float freq) override;
         void note_off() override;
 
         bool is_on() const override;
 
-        float process(float sample_time) override;
+        void process(float sample_time, float& output) override;
 
     private:
         std::shared_ptr<Oscillator> m_osc;

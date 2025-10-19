@@ -13,24 +13,29 @@ namespace MusicLib
     {
     public:
         explicit Instrument(Voice& voice, unsigned int polyphony = 4,
-            float vol = 1, bool retrigger = false);
+            float vol = 1, float pan = .5, bool retrigger = false);
         ~Instrument() noexcept = default;
 
         Voice& voice(size_t num);
 
-        float process(float sample_time);
+        void process(float sample_time, float& out_left, float& out_right);
 
         void note_on(unsigned int voice_num, float freq);
         void note_on(unsigned int voice_num);
         void note_off(unsigned int voice_num);
 
         void vol(float vol);
+        float vol() const;
+
+        void pan(float freq);
+        float pan() const;
 
         void retrigger(bool retrigger);
 
     private:
         std::vector<std::shared_ptr<Voice>> m_voices;
         float m_vol;
+        float m_pan;
         bool m_retrigger;
     };
 }
