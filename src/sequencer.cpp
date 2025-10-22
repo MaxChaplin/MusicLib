@@ -15,17 +15,25 @@ MultiSequencer::MultiSequencer(std::vector<Sequencer>& seqs)
 
 void MultiSequencer::tick()
 {
-    for (auto seq = m_seqs.begin(); seq != m_seqs.end(); ++seq)
+    for (auto& seq : m_seqs)
     {
-        seq->tick();
+        seq.tick();
     }
 }
 
 void MultiSequencer::step()
 {
-    for (auto seq = m_seqs.begin(); seq != m_seqs.end(); ++seq)
+    for (auto& seq : m_seqs)
     {
-        seq->step();
+        seq.step();
+    }
+}
+
+void MultiSequencer::reset()
+{
+    for (auto& seq : m_seqs)
+    {
+        seq.reset();
     }
 }
 
@@ -71,6 +79,11 @@ void SequencerBasic::step()
     }
 }
 
+void SequencerBasic::reset()
+{
+    m_cmd_stream.reset();
+}
+
 SequencerMultiChannel::SequencerMultiChannel(TimeManager& time_mgr, InstrumentManager& ins_mgr, std::vector<CommandStream>& cmd_streams, CommandProcessor& cmd_processor)
 : m_time_mgr{time_mgr}
 , m_cmd_streams{cmd_streams}
@@ -90,17 +103,25 @@ void SequencerMultiChannel::tick()
 
 void SequencerMultiChannel::step()
 {
-    for (auto cs = m_cmd_streams.begin(); cs != m_cmd_streams.end(); ++cs)
+    for (auto& cs : m_cmd_streams)
     {
-        auto cmd = cs->current();
+        auto cmd = cs.current();
         
         // Handle the command.
-        m_cmd_processor.handle_command_stream(*cmd, *cs);
+        m_cmd_processor.handle_command_stream(*cmd, cs);
         m_cmd_processor.handle_instrument_manager(*cmd, m_ins_mgr);
         m_cmd_processor.handle_time_manager(*cmd, m_time_mgr);
         
         // Go to next command.
-        cs->step();
+        cs.step();
+    }
+}
+
+void SequencerMultiChannel::reset()
+{
+    for (auto& cs : m_cmd_streams)
+    {
+        cs.reset();
     }
 }
 

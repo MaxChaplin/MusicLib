@@ -41,6 +41,9 @@ public:
      * to progress the track manually.
      */
     virtual void step() = 0;
+
+    
+    virtual void reset() = 0;
 };
 
 /**
@@ -65,6 +68,12 @@ public:
      *        only here for completeness.
      */
     void step() override;
+
+    /**
+     * @brief Reset all sequencers.
+     * 
+     */
+    void reset() override;
 
 private:
     std::vector<Sequencer>& m_seqs;
@@ -92,6 +101,8 @@ public:
      */
     void step() override;
 
+    void reset() override;
+
 private:
     TimeManager& m_time_mgr;
     CommandStream& m_cmd_stream;
@@ -117,6 +128,12 @@ public:
      *        streams.
      */
     void step() override;
+
+    /**
+     * @brief Reset all channels (return their playhead to the first command)
+     * 
+     */
+    void reset() override;
 
 private:
     TimeManager& m_time_mgr;

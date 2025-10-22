@@ -9,7 +9,7 @@ class AudioManager
         AudioManager() = default;
         virtual ~AudioManager() = default;
 
-        virtual void play() = 0;
+        virtual void start() = 0;
         virtual void stop() = 0;
 
         virtual unsigned int sample_rate() = 0;

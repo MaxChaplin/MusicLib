@@ -43,5 +43,6 @@
 # vs code
 .vscode
 
-# tests directory
+# directories
+**/build/
 /tests

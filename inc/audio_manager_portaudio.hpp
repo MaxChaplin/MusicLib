@@ -24,7 +24,7 @@ public:
         unsigned int buffer_size, PortAudioData& callback_data);
     ~AudioManagerPortAudio() noexcept;
 
-    void play() override;
+    void start() override;
     void stop() override;
 
     unsigned int sample_rate() override;

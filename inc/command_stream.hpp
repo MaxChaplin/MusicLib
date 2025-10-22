@@ -24,10 +24,12 @@ public:
 
     virtual void add(Command& command) = 0;
 
-    virtual Command* current() = 0;
+    virtual Command* current() const = 0;
+    virtual bool finished() const = 0;
+
+    virtual void reset() = 0;
     virtual unsigned long step() = 0;
     virtual void cursor(unsigned long index) = 0;
-    virtual bool finished() = 0;
 };
 
 /**
@@ -48,10 +50,12 @@ public:
 
     void add(Command& command) override;
 
-    Command* current() override;
+    Command* current() const override;
+    bool finished() const override;
+
+    void reset() override;
     unsigned long step() override;
     void cursor(unsigned long cursor) override;
-    bool finished() override;
 
 private:
     std::vector<std::unique_ptr<Command>> m_commands;
@@ -76,10 +80,12 @@ public:
 
     void add(Command& command) override;
 
-    Command* current() override;
+    Command* current() const override;
+    bool finished() const override;
+    
+    void reset() override;
     unsigned long step() override;
     void cursor(unsigned long cursor) override;
-    bool finished() override;
 
     void instrument(Instrument& ins);
     Instrument& instrument();

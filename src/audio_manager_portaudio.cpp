@@ -48,10 +48,9 @@ AudioManagerPortAudio::~AudioManagerPortAudio() noexcept
     manage_error(err);
 }
 
-void AudioManagerPortAudio::play()
+void AudioManagerPortAudio::start()
 {
     PaError err;
-
     PaStream* stream = m_stream.get();
 
     // Open an audio I/O stream.

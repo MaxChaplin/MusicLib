@@ -58,12 +58,7 @@ CommandStreamBasic& CommandStreamBasic::operator=(const CommandStreamBasic& othe
     return *this;
 }
 
-void CommandStreamBasic::add(Command& command)
-{
-    m_commands.push_back(command.clone());
-}
-
-Command* CommandStreamBasic::current()
+Command* CommandStreamBasic::current() const
 {
     if (m_cursor >= m_commands.size())
     {
@@ -71,6 +66,16 @@ Command* CommandStreamBasic::current()
     }
     
     return m_commands[m_cursor].get();
+}
+
+bool CommandStreamBasic::finished() const
+{
+    return !m_looping && m_cursor >= m_commands.size() - 1;
+}
+
+void CommandStreamBasic::reset()
+{
+    cursor(0);
 }
 
 unsigned long CommandStreamBasic::step()
@@ -98,10 +103,14 @@ void CommandStreamBasic::cursor(unsigned long cursor)
     }
 }
 
-bool CommandStreamBasic::finished()
+void CommandStreamBasic::add(Command& command)
 {
-    return !m_looping && m_cursor >= m_commands.size() - 1;
+    m_commands.push_back(command.clone());
 }
+
+
+
+
 
 CommandStreamInstrument::CommandStreamInstrument(Instrument& ins, bool looping)
 : m_commands{}
@@ -164,13 +173,7 @@ CommandStreamInstrument& CommandStreamInstrument::operator=(const CommandStreamI
     return *this;
 }
 
-
-void CommandStreamInstrument::add(Command& command)
-{
-    m_commands.push_back(command.clone());
-}
-
-Command* CommandStreamInstrument::current()
+Command* CommandStreamInstrument::current() const
 {
     if (m_cursor >= m_commands.size())
     {
@@ -178,6 +181,18 @@ Command* CommandStreamInstrument::current()
     }
 
     return m_commands[m_cursor].get();
+}
+
+
+
+bool CommandStreamInstrument::finished() const
+{
+    return !m_looping && m_cursor >= m_commands.size() - 1;
+}
+
+void CommandStreamInstrument::reset()
+{
+    cursor(0);
 }
 
 unsigned long CommandStreamInstrument::step()
@@ -205,9 +220,9 @@ void CommandStreamInstrument::cursor(unsigned long cursor)
     }
 }
 
-bool CommandStreamInstrument::finished()
+void CommandStreamInstrument::add(Command& command)
 {
-    return !m_looping && m_cursor >= m_commands.size() - 1;
+    m_commands.push_back(command.clone());
 }
 
 void CommandStreamInstrument::instrument(Instrument& ins)

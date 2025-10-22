@@ -4,8 +4,8 @@
 namespace MusicLib {
     
 /**
- * @brief A time manager is used by a sequencer to keep time, in particular
- *        to decide when to perform a step.
+ * @brief A time manager is used by a sequencer to keep time, in particular - to
+ * decide when to perform a step.
  * 
  */
 class TimeManager
