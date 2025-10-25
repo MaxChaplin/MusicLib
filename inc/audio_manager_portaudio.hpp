@@ -2,7 +2,7 @@
 #define AUDIO_MANAGER_PORTAUDIO_H_
 
 #include "audio_manager.hpp"
-#include "instrument.hpp"
+#include "device_manager.hpp"
 #include "sequencer.hpp"
 
 #include <portaudio.h>
@@ -12,10 +12,27 @@ namespace MusicLib {
 
 struct PortAudioData
 {
+    PortAudioData() = default;
+};
+
+struct PortAudioDataOut : public PortAudioData
+{
+    PortAudioDataOut(Sequencer& seq, DeviceManagerOut& dev_mgr, float sample_duration);
+
     Sequencer& seq;
-    InstrumentManager& ins_mgr;
+    DeviceManagerOut& dev_mgr;
     float sample_duration;
 };
+
+struct PortAudioDataInOut : public PortAudioData
+{
+    PortAudioDataInOut(Sequencer& seq, DeviceManagerInOut& dev_mgr, float sample_duration);
+
+    Sequencer& seq;
+    DeviceManagerInOut& dev_mgr;
+    float sample_duration;
+};
+
 
 class AudioManagerPortAudio : public AudioManager
 {

@@ -1,14 +1,14 @@
 #include "command_processor.hpp"
 #include "command.hpp"
 #include "command_stream.hpp"
-#include "instrument.hpp"
+#include "device.hpp"
 #include "time_manager.hpp"
 
 namespace MusicLib {
 
 CommandProcessorBasic::CommandProcessorBasic()
 : m_cmd_stream_handler{}
-, m_ins_mgr_handler{}
+, m_dev_mgr_handler{}
 , m_time_handler{}
 {
 
@@ -19,9 +19,9 @@ void CommandProcessorBasic::handle_command_stream(Command& cmd, CommandStream& c
     m_cmd_stream_handler(cmd, cmd_stream);
 }
 
-void CommandProcessorBasic::handle_instrument_manager(Command& cmd, InstrumentManager& ins_mgr) 
+void CommandProcessorBasic::handle_device_manager(Command& cmd, DeviceManager& dev_mgr) 
 {
-    m_ins_mgr_handler(cmd, ins_mgr);
+    m_dev_mgr_handler(cmd, dev_mgr);
 }
 
 void CommandProcessorBasic::handle_time_manager(Command& cmd, TimeManager& time_mgr)

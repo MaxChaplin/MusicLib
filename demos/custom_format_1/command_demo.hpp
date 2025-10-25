@@ -49,6 +49,12 @@ public:
         struct
         {
             unsigned int ins;
+            float duration;
+        } param_time;
+
+        struct
+        {
+            unsigned int ins;
             Waveshape shape;
         } wave;
     };

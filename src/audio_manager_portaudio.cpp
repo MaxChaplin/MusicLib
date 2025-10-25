@@ -6,26 +6,65 @@
 
 namespace MusicLib {
 
-static int portaudio_callback(const void *inputBuffer [[maybe_unused]],
+static int portaudio_out_callback(const void *inputBuffer [[maybe_unused]],
     void *outputBuffer, unsigned long framesPerBuffer,
     const PaStreamCallbackTimeInfo* timeInfo [[maybe_unused]],
     PaStreamCallbackFlags statusFlags [[maybe_unused]], void *userData)
 {
     float *out = (float*) outputBuffer;
-    PortAudioData *data = (PortAudioData*) userData;
-    Sequencer& seq = data->seq;
-    InstrumentManager& ins_mgr = data->ins_mgr;
+    auto *data = (PortAudioDataOut*) userData;
+    auto& seq = data->seq;
+    auto& dev_mgr = data->dev_mgr;
 
     // Write interleaved audio data.
     for(size_t i = 0; i < framesPerBuffer; i++)
     {
-        ins_mgr.process(data->sample_duration, *out, *(out+1));
+        dev_mgr.process(data->sample_duration, *out, *(out+1));
         out += 2;
         seq.tick();
     }
 
     return 0;
 }
+
+static int portaudio_in_out_callback(const void *inputBuffer [[maybe_unused]],
+    void *outputBuffer, unsigned long framesPerBuffer,
+    const PaStreamCallbackTimeInfo* timeInfo [[maybe_unused]],
+    PaStreamCallbackFlags statusFlags [[maybe_unused]], void *userData)
+{
+    float *in = (float*) inputBuffer;
+    float *out = (float*) outputBuffer;
+    auto *data = (PortAudioDataInOut*) userData;
+    auto& seq = data->seq;
+    auto& dev_mgr = data->dev_mgr;
+
+    // Write interleaved audio data.
+    for(size_t i = 0; i < framesPerBuffer; i++)
+    {
+        dev_mgr.process(data->sample_duration, *in, *(in+1), *out, *(out+1));
+        out += 2;
+        seq.tick();
+    }
+
+    return 0;
+}
+
+PortAudioDataOut::PortAudioDataOut(Sequencer& seq_, DeviceManagerOut& dev_mgr_, float sample_duration_)
+: seq{seq_}
+, dev_mgr{dev_mgr_}
+, sample_duration{sample_duration_}
+{
+
+}
+
+PortAudioDataInOut::PortAudioDataInOut(Sequencer& seq_, DeviceManagerInOut& dev_mgr_, float sample_duration_)
+: seq{seq_}
+, dev_mgr{dev_mgr_}
+, sample_duration{sample_duration_}
+{
+
+}
+
 
 AudioManagerPortAudio::AudioManagerPortAudio(unsigned int sample_rate, unsigned int buffer_size, PortAudioData& callback_data)
 : m_sample_rate{sample_rate}
@@ -55,7 +94,7 @@ void AudioManagerPortAudio::start()
 
     // Open an audio I/O stream.
     err = Pa_OpenDefaultStream(&stream, 0, 2, paFloat32, m_sample_rate,
-        m_buffer_size, portaudio_callback, &m_callback_data);
+        m_buffer_size, portaudio_out_callback, &m_callback_data);
     manage_error(err);
 
     err = Pa_StartStream(stream);

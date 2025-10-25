@@ -2,7 +2,7 @@
 #define COMMAND_PROCESSOR_H_
 
 #include "command_stream.hpp"
-#include "instrument_manager.hpp"
+#include "device_manager.hpp"
 #include "time_manager.hpp"
 
 #include <memory>
@@ -23,7 +23,7 @@ public:
     virtual ~CommandProcessor() = default;
 
     virtual void handle_command_stream(Command& cmd, CommandStream& cmd_stream) = 0;
-    virtual void handle_instrument_manager(Command& cmd, InstrumentManager& ins_mgr) = 0;
+    virtual void handle_device_manager(Command& cmd, DeviceManager& dev_mgr) = 0;
     virtual void handle_time_manager(Command& cmd, TimeManager& time_mgr) = 0;
 };
 
@@ -33,8 +33,8 @@ public:
  * The handle functions must be given before playing.
  * Since the handle methods perform upcasting, it is the responsibility of
  * the given handlers to ensure that every command can be executed safely
- * (e.g. if one of the commands calls an instrument's method, all 
- * instruments have it.)
+ * (e.g. if one of the commands calls an device's method, all 
+ * devices have it.)
  */
 class CommandProcessorBasic : public CommandProcessor
 {
@@ -43,7 +43,7 @@ public:
     ~CommandProcessorBasic() noexcept = default;
 
     void handle_command_stream(Command& cmd, CommandStream& cmd_stream) override;
-    void handle_instrument_manager(Command& cmd, InstrumentManager& ins_mgr) override;
+    void handle_device_manager(Command& cmd, DeviceManager& dev_mgr) override;
     void handle_time_manager(Command& cmd, TimeManager& time_mgr) override;
 
     template <typename C, typename CS>
@@ -57,14 +57,14 @@ public:
         };
     }
 
-    template <typename C, typename IM>
-    void set_instrument_handler(std::function<void(C&, IM&)> ins_mgr_handler)
+    template <typename C, typename DM>
+    void set_device_manager_handler(std::function<void(C&, DM&)> dev_mgr_handler)
     {
-        m_ins_mgr_handler = [ins_mgr_handler](Command& cmd, InstrumentManager& ins_mgr)
+        m_dev_mgr_handler = [dev_mgr_handler](Command& cmd, DeviceManager& dev_mgr)
         {
             auto& cmd_cast = static_cast<C&>(cmd);
-            auto& ins_mgr_cast = static_cast<IM&>(ins_mgr);
-            ins_mgr_handler(cmd_cast, ins_mgr_cast);
+            auto& dev_mgr_cast = static_cast<DM&>(dev_mgr);
+            dev_mgr_handler(cmd_cast, dev_mgr_cast);
         };
     }
 
@@ -81,7 +81,7 @@ public:
 
 private:
     std::function<void(Command&, CommandStream&)> m_cmd_stream_handler;
-    std::function<void(Command&, InstrumentManager&)> m_ins_mgr_handler;
+    std::function<void(Command&, DeviceManager&)> m_dev_mgr_handler;
     std::function<void(Command&, TimeManager&)> m_time_handler;
 };
 

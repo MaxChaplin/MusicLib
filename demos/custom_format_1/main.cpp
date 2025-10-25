@@ -2,19 +2,20 @@
 
 #include "audio_manager_portaudio.hpp"
 #include "command_stream.hpp"
-#include "instrument.hpp"
+#include "device.hpp"
+#include "device_manager.hpp"
 #include "sequencer.hpp"
 #include "time_manager.hpp"
-#include "util.hpp"
+#include "pitch.hpp"
 #include "voice.hpp"
 
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <sstream>
 #include <optional>
 
 #include <portaudio.h>
-#include <bits/stdc++.h>
 
 #define SAMPLE_RATE 44100
 #define BUFFER_SIZE 512
@@ -135,7 +136,7 @@ MusicLib::CommandStreamBasic parse_file(std::string song_filename, unsigned int&
 
     if (file.is_open())
     {
-        while (getline(file, line))
+        while (std::getline(file, line))
         {
             std::stringstream ss(line);
 
@@ -186,11 +187,15 @@ void handle_instrument_manager(CommandDemo& cmd, MusicLib::InstrumentManager& in
         freq = MusicLib::freq_from_pitch[cmd.note.pitch];
         if (freq > 0)
         {
-            ins_mgr.instrument(cmd.note.ins).note_on(0, freq);
+            static_cast<MusicLib::InstrumentMono&>(
+                ins_mgr.instrument(cmd.note.ins)
+            ).note_on(freq);
         }
         else
         {
-            ins_mgr.instrument(cmd.note.ins).note_off(0);
+            static_cast<MusicLib::InstrumentMono&>(
+                ins_mgr.instrument(cmd.note.ins)
+            ).note_off();
         }
 
         return;
@@ -201,31 +206,49 @@ void handle_instrument_manager(CommandDemo& cmd, MusicLib::InstrumentManager& in
 
     case CommandDemo::Type::Vol:
         // ins_mgr.instrument(cmd.wave.ins).call_all_voices<MusicLib::VoiceOsc>(&MusicLib::VoiceOsc::vol, cmd.param_float.amount);
-        ins_mgr.instrument(cmd.wave.ins).voice(0).vol(cmd.param_float.amount);
+        ins_mgr.instrument(cmd.wave.ins).vol(cmd.param_float.amount);
         return;
     
     case CommandDemo::Type::Waveshape:
         static_cast<MusicLib::OscillatorSwitch&>(
             static_cast<MusicLib::VoiceOsc&>(
-                ins_mgr.instrument(cmd.wave.ins).voice(0)
+                static_cast<MusicLib::InstrumentMono&>(
+                    ins_mgr.instrument(cmd.wave.ins)
+                ).voice()
             ).osc()
         ).select((int) cmd.wave.shape);
         return;
 
     case CommandDemo::Type::Attack:
-        static_cast<MusicLib::EnvelopeADSR&>(ins_mgr.instrument(cmd.wave.ins).voice(0).env()).attack(cmd.param_float.amount);
+        static_cast<MusicLib::EnvelopeADSR&>(
+            static_cast<MusicLib::InstrumentMono&>(
+                ins_mgr.instrument(cmd.wave.ins)
+            ).voice().env()
+        ).attack(cmd.param_time.duration);
         return;
     
     case CommandDemo::Type::Decay:
-        static_cast<MusicLib::EnvelopeADSR&>(ins_mgr.instrument(cmd.wave.ins).voice(0).env()).decay(cmd.param_float.amount);
+        static_cast<MusicLib::EnvelopeADSR&>(
+            static_cast<MusicLib::InstrumentMono&>(
+                ins_mgr.instrument(cmd.wave.ins)
+            ).voice().env()
+        ).decay(cmd.param_time.duration);
         return;
     
     case CommandDemo::Type::Sustain:
-        static_cast<MusicLib::EnvelopeADSR&>(ins_mgr.instrument(cmd.wave.ins).voice(0).env()).sustain(cmd.param_float.amount);
+        static_cast<MusicLib::EnvelopeADSR&>(
+            static_cast<MusicLib::InstrumentMono&>(
+                ins_mgr.instrument(cmd.wave.ins)
+            ).voice().env()
+        ).sustain(cmd.param_float.amount);
         return;
 
     case CommandDemo::Type::Release:
-        static_cast<MusicLib::EnvelopeADSR&>(ins_mgr.instrument(cmd.wave.ins).voice(0).env()).release(cmd.param_float.amount);
+        static_cast<MusicLib::EnvelopeADSR&>(
+            static_cast<MusicLib::InstrumentMono&>(
+                ins_mgr.instrument(cmd.wave.ins)
+            ).voice().env()
+        ).release(cmd.param_time.duration);
         return;
 
     default:
@@ -263,7 +286,7 @@ int main(int argc, char *argv[])
 
     MusicLib::CommandProcessorBasic cmd_processor;
     cmd_processor.set_command_stream_handler<CommandDemo, MusicLib::CommandStreamBasic>(handle_command_stream);
-    cmd_processor.set_instrument_handler<CommandDemo, MusicLib::InstrumentManager>(handle_instrument_manager);
+    cmd_processor.set_device_manager_handler<CommandDemo, MusicLib::InstrumentManager>(handle_instrument_manager);
     cmd_processor.set_time_handler<CommandDemo, MusicLib::TimeManagerEventBased>(handle_time_manager);
 
     MusicLib::InstrumentManager ins_mgr{BUFFER_SIZE};
@@ -278,7 +301,7 @@ int main(int argc, char *argv[])
 
     MusicLib::EnvelopeADSR env{.01, 2, .2, .5};
     MusicLib::VoiceOsc voice{osc_switch, env};
-    MusicLib::Instrument ins{voice, 1};
+    MusicLib::InstrumentMono ins{voice, 1};
 
     for (size_t i = 0; i <= max_ins_num; ++i)
     {
@@ -293,7 +316,7 @@ int main(int argc, char *argv[])
     MusicLib::SequencerBasic seq{time_mgr, ins_mgr, cmd_stream, cmd_processor};
 
     // Set audio manager.
-    MusicLib::PortAudioData data{seq, ins_mgr, 1. / SAMPLE_RATE};
+    MusicLib::PortAudioDataOut data{seq, ins_mgr, 1. / SAMPLE_RATE};
     MusicLib::AudioManagerPortAudio audio_manager{SAMPLE_RATE, BUFFER_SIZE, data};
 
     char input;

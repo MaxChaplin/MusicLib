@@ -1,6 +1,6 @@
 #include "command.hpp"
 #include "command_stream.hpp"
-#include "instrument.hpp"
+#include "device.hpp"
 
 namespace MusicLib {
     
