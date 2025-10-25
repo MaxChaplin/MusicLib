@@ -11,15 +11,8 @@ A library for building synthesizers, trackers and other musical apps. Work in pr
 
 In the main directory, run the following commands:
 
-    mkdir build
-    cd build
-    cmake ..
-    cmake --build .
+    cmake build
+    cmake --build build
 
-In the demos directory there are several example projects. In order to compile
-a demo, run in its directory the following commands:
-
-    mkdir build
-    cd build
-    cmake ..
-    cmake --build .
+In the demos directory there are several example projects, each can be compiled
+independently.

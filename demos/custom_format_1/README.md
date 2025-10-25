@@ -4,6 +4,17 @@ This is a demonstration of the ability to define a custom command set in MusicLi
 
 The number of instruments is set to accomodate the highest instrument number (e.g. if instrument number 10 is used then there will be 11 instruments, 0-10, regardless of whether the other numbers are used). The highest allowed number of instruments is 32 - a command with instrument no. 32 or higher will be ignored.
 
+In order to build the project, in the demo directory. run
+
+    cmake build
+    cmake --build build
+
+In order to execute the demo, run
+
+    ./build/demo [song file]
+
+Example songs are in the songs directory.
+
 ## Commands
 
 * Note: N [instrument number] [duration] [pitch]
