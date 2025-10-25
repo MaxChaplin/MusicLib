@@ -2,12 +2,13 @@
 
 #include "audio_manager_portaudio.hpp"
 #include "command_stream.hpp"
-#include "device.hpp"
+#include "instrument.hpp"
 #include "device_manager.hpp"
 #include "sequencer.hpp"
 #include "time_manager.hpp"
 #include "pitch.hpp"
 #include "voice.hpp"
+#include "envelope.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -187,68 +188,69 @@ void handle_instrument_manager(CommandDemo& cmd, MusicLib::InstrumentManager& in
         freq = MusicLib::freq_from_pitch[cmd.note.pitch];
         if (freq > 0)
         {
-            static_cast<MusicLib::InstrumentMono&>(
-                ins_mgr.instrument(cmd.note.ins)
-            ).note_on(freq);
+            ins_mgr
+            .instrument<MusicLib::InstrumentMono>(cmd.wave.ins)
+            .note_on(freq);
         }
         else
         {
-            static_cast<MusicLib::InstrumentMono&>(
-                ins_mgr.instrument(cmd.note.ins)
-            ).note_off();
+            ins_mgr
+            .instrument<MusicLib::InstrumentMono>(cmd.wave.ins)
+            .note_off();
         }
 
         return;
 
     case CommandDemo::Type::Pan:
-        ins_mgr.instrument(cmd.note.ins).pan(cmd.param_float.amount);
+        ins_mgr
+        .instrument(cmd.note.ins)
+        .pan(cmd.param_float.amount);
         return;
 
     case CommandDemo::Type::Vol:
         // ins_mgr.instrument(cmd.wave.ins).call_all_voices<MusicLib::VoiceOsc>(&MusicLib::VoiceOsc::vol, cmd.param_float.amount);
-        ins_mgr.instrument(cmd.wave.ins).vol(cmd.param_float.amount);
+        ins_mgr
+        .instrument(cmd.wave.ins)
+        .vol(cmd.param_float.amount);
         return;
     
     case CommandDemo::Type::Waveshape:
-        static_cast<MusicLib::OscillatorSwitch&>(
-            static_cast<MusicLib::VoiceOsc&>(
-                static_cast<MusicLib::InstrumentMono&>(
-                    ins_mgr.instrument(cmd.wave.ins)
-                ).voice()
-            ).osc()
-        ).select((int) cmd.wave.shape);
+        ins_mgr
+        .instrument<MusicLib::InstrumentMono>(cmd.wave.ins)
+        .voice<MusicLib::VoiceOsc>()
+        .osc<MusicLib::OscillatorSwitch>()
+        .select((int) cmd.wave.shape);
         return;
 
     case CommandDemo::Type::Attack:
-        static_cast<MusicLib::EnvelopeADSR&>(
-            static_cast<MusicLib::InstrumentMono&>(
-                ins_mgr.instrument(cmd.wave.ins)
-            ).voice().env()
-        ).attack(cmd.param_time.duration);
+        ins_mgr
+        .instrument<MusicLib::InstrumentMono>(cmd.wave.ins)
+        .voice<MusicLib::VoiceOsc>()
+        .env<MusicLib::EnvelopeADSR>()
+        .attack(cmd.param_time.duration);
+        // ins_mgr.instrument(cmd.wave.ins)
         return;
     
     case CommandDemo::Type::Decay:
-        static_cast<MusicLib::EnvelopeADSR&>(
-            static_cast<MusicLib::InstrumentMono&>(
-                ins_mgr.instrument(cmd.wave.ins)
-            ).voice().env()
-        ).decay(cmd.param_time.duration);
+        ins_mgr
+        .instrument<MusicLib::InstrumentMono>(cmd.wave.ins)
+        .voice<MusicLib::VoiceOsc>()
+        .env<MusicLib::EnvelopeADSR>()
+        .decay(cmd.param_time.duration);
         return;
     
     case CommandDemo::Type::Sustain:
-        static_cast<MusicLib::EnvelopeADSR&>(
-            static_cast<MusicLib::InstrumentMono&>(
-                ins_mgr.instrument(cmd.wave.ins)
-            ).voice().env()
-        ).sustain(cmd.param_float.amount);
+        ins_mgr.instrument<MusicLib::InstrumentMono>(cmd.wave.ins)
+        .voice<MusicLib::VoiceOsc>()
+        .env<MusicLib::EnvelopeADSR>()
+        .sustain(cmd.param_float.amount);
         return;
 
     case CommandDemo::Type::Release:
-        static_cast<MusicLib::EnvelopeADSR&>(
-            static_cast<MusicLib::InstrumentMono&>(
-                ins_mgr.instrument(cmd.wave.ins)
-            ).voice().env()
-        ).release(cmd.param_time.duration);
+        ins_mgr.instrument<MusicLib::InstrumentMono>(cmd.wave.ins)
+        .voice<MusicLib::VoiceOsc>()
+        .env<MusicLib::EnvelopeADSR>()
+        .release(cmd.param_time.duration);
         return;
 
     default:

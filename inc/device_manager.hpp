@@ -2,6 +2,7 @@
 #define DEVICE_MANAGER_H_
 
 #include "device.hpp"
+#include "instrument.hpp"
 
 #include <vector>
 #include <memory>
@@ -51,7 +52,13 @@ public:
     explicit InstrumentManager(size_t buffer_size);
     ~InstrumentManager() noexcept = default;
 
-    Instrument& instrument(unsigned int index) const;
+    // Instrument& instrument(unsigned int index) const;
+
+    template <typename I = Instrument>
+    I& instrument(unsigned int index) const
+    {
+        return static_cast<I&>(*m_instruments[index]); 
+    }
 
     void clone_instrument(Instrument& instrument);
     void process(float sample_duration, float& out_left, float& out_right) override;

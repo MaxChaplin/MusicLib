@@ -216,9 +216,9 @@ void VoiceOsc::osc(Oscillator& osc)
     m_osc = osc.clone();
 }
 
-Oscillator& VoiceOsc::osc()
-{
-    return *m_osc;
-}
+// Oscillator& VoiceOsc::osc()
+// {
+//     return *m_osc;
+// }
 
 }

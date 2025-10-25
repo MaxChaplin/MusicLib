@@ -64,7 +64,19 @@ public:
 
     Envelope& env() override;
 
-    Voice& voice(size_t num);
+    template <typename E>
+    E& env(size_t index)
+    {
+        return static_cast<E&>(*m_env);
+    }
+
+    Voice& voice(size_t index);
+    
+    template <typename V>
+    V& voice(size_t index)
+    {
+        return static_cast<V&>(*m_voices[index]);
+    }
 
     void freq(float m_freq) override;
     float freq() const override;
@@ -105,6 +117,12 @@ public:
 
     Envelope& env() override;
 
+    template <typename E>
+    E& env()
+    {
+        return static_cast<E&>(*m_env);
+    }
+
     void freq(float freq) override;
     float freq() const override;
 
@@ -118,7 +136,13 @@ public:
     void process(float sample_duration, float& output) override;
 
     void osc(Oscillator& osc);
-    Oscillator& osc();
+    // Oscillator& osc();
+
+    template <typename O = Oscillator>
+    O& osc()
+    {
+        return static_cast<O&>(*m_osc);
+    }
 
 private:
     std::unique_ptr<Oscillator> m_osc;
@@ -144,10 +168,15 @@ public:
     VoiceFM2(VoiceFM2&&) noexcept = default;
     VoiceFM2& operator=(VoiceFM2&&) noexcept = default;
 
-
     std::unique_ptr<Voice> clone() const override;
 
     Envelope& env() override;
+
+    template <typename E>
+    E& env()
+    {
+        return static_cast<E&>(*m_env);
+    }
 
     void freq(float m_freq) override;
     float freq() const override;

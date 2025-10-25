@@ -1,4 +1,4 @@
-#include "device.hpp"
+#include "instrument.hpp"
 #include "voice.hpp"
 
 #include <iostream>
@@ -6,12 +6,6 @@
 
 
 namespace MusicLib {
-
-// template<>
-// std::unique_ptr<Instrument> Instrument::clone<Instrument>() const
-// {
-//     return std::make_unique<Instrument>(*this);
-// }
 
 InstrumentMono::InstrumentMono(Voice& voice, float vol, float pan, bool retrigger)
 : m_voice{voice.clone()}
@@ -47,12 +41,6 @@ std::unique_ptr<Device> InstrumentMono::clone() const
 {
     return std::make_unique<InstrumentMono>(*this);
 }
-
-// template<>
-// std::unique_ptr<InstrumentMono> InstrumentMono::clone<Instrument>() const
-// {
-//     return std::make_unique<InstrumentMono>(*this);
-// }
 
 void InstrumentMono::process(float sample_duration, float& out_left, float& out_right)
 {
@@ -115,12 +103,6 @@ void InstrumentMono::retrigger(bool retrigger)
     m_retrigger = retrigger;
 }
 
-Voice& InstrumentMono::voice()
-{
-    return *m_voice;
-}
-
-
 InstrumentPoly::InstrumentPoly(Voice& voice, unsigned int polyphony, float vol, float pan, bool retrigger)
 : m_voices{std::vector<std::unique_ptr<Voice>>{}}
 , m_vol{vol}
@@ -172,12 +154,6 @@ std::unique_ptr<Device> InstrumentPoly::clone() const
 {
     return std::make_unique<InstrumentPoly>(*this);
 }
-
-// template<>
-// std::unique_ptr<InstrumentPoly> InstrumentPoly::clone<InstrumentPoly>() const
-// {
-//     return std::make_unique<InstrumentPoly>(*this);
-// }
 
 void InstrumentPoly::process(float sample_duration, float& out_left, float& out_right)
 {

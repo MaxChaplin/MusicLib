@@ -16,10 +16,10 @@ InstrumentManager::InstrumentManager(size_t buffer_size)
 {
 }
 
-Instrument& InstrumentManager::instrument(unsigned int index) const
-{
-    return *m_instruments[index];
-}
+// Instrument& InstrumentManager::instrument(unsigned int index) const
+// {
+//     return *m_instruments[index];
+// }
 
 void InstrumentManager::clone_instrument(Instrument& instrument)
 {
