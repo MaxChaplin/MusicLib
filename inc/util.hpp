@@ -1,4 +1,5 @@
 #include <memory>
+#include <type_traits>
 
 namespace MusicLib {
 

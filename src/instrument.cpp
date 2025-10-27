@@ -7,7 +7,7 @@
 
 namespace MusicLib {
 
-InstrumentMono::InstrumentMono(Voice& voice, float vol, float pan, bool retrigger)
+InstrumentMonoDynamic::InstrumentMonoDynamic(Voice& voice, float vol, float pan, bool retrigger)
 : m_voice{voice.clone()}
 , m_vol{vol}
 , m_pan{pan}
@@ -16,7 +16,7 @@ InstrumentMono::InstrumentMono(Voice& voice, float vol, float pan, bool retrigge
 
 }
 
-InstrumentMono::InstrumentMono(const InstrumentMono& other)
+InstrumentMonoDynamic::InstrumentMonoDynamic(const InstrumentMonoDynamic& other)
 : m_voice{other.m_voice->clone()}
 , m_vol{other.m_vol}
 , m_pan{other.m_pan}
@@ -25,7 +25,7 @@ InstrumentMono::InstrumentMono(const InstrumentMono& other)
 
 }
 
-InstrumentMono& InstrumentMono::operator=(const InstrumentMono& other)
+InstrumentMonoDynamic& InstrumentMonoDynamic::operator=(const InstrumentMonoDynamic& other)
 {
     if (this != &other)
     {
@@ -37,17 +37,16 @@ InstrumentMono& InstrumentMono::operator=(const InstrumentMono& other)
     return *this;
 }
 
-std::unique_ptr<Device> InstrumentMono::clone() const
+std::unique_ptr<Device> InstrumentMonoDynamic::clone() const
 {
-    return std::make_unique<InstrumentMono>(*this);
+    return std::make_unique<InstrumentMonoDynamic>(*this);
 }
 
-void InstrumentMono::process(float sample_duration, float& out_left, float& out_right)
+void InstrumentMonoDynamic::process(float sample_duration, float& out_left, float& out_right)
 {
     out_left = 0;
     out_right = 0;
     static float temp;
-
     m_voice->process(sample_duration, temp);
     out_left += m_vol * temp;
 
@@ -56,7 +55,7 @@ void InstrumentMono::process(float sample_duration, float& out_left, float& out_
     out_left *= 1 - m_pan;
 }
 
-void InstrumentMono::note_on(float freq)
+void InstrumentMonoDynamic::note_on(float freq)
 {
     if (freq == 0)
     {
@@ -68,42 +67,42 @@ void InstrumentMono::note_on(float freq)
     }
 }
 
-void InstrumentMono::note_on()
+void InstrumentMonoDynamic::note_on()
 {
     note_on(m_voice->freq());
 }
 
-void InstrumentMono::note_off()
+void InstrumentMonoDynamic::note_off()
 {
     m_voice->note_off();
 }
 
-void InstrumentMono::vol(float vol)
+void InstrumentMonoDynamic::vol(float vol)
 {
     m_vol = vol;
 }
 
-float InstrumentMono::vol() const
+float InstrumentMonoDynamic::vol() const
 {
     return m_vol;
 }
 
-void InstrumentMono::pan(float pan)
+void InstrumentMonoDynamic::pan(float pan)
 {
     m_pan = pan;
 }
 
-float InstrumentMono::pan() const
+float InstrumentMonoDynamic::pan() const
 {
     return m_pan;
 }
 
-void InstrumentMono::retrigger(bool retrigger)
+void InstrumentMonoDynamic::retrigger(bool retrigger)
 {
     m_retrigger = retrigger;
 }
 
-InstrumentPoly::InstrumentPoly(Voice& voice, unsigned int polyphony, float vol, float pan, bool retrigger)
+InstrumentPolyDynamic::InstrumentPolyDynamic(Voice& voice, unsigned int polyphony, float vol, float pan, bool retrigger)
 : m_voices{std::vector<std::unique_ptr<Voice>>{}}
 , m_vol{vol}
 , m_pan{pan}
@@ -117,7 +116,7 @@ InstrumentPoly::InstrumentPoly(Voice& voice, unsigned int polyphony, float vol, 
     }
 }
 
-InstrumentPoly::InstrumentPoly(const InstrumentPoly& other)
+InstrumentPolyDynamic::InstrumentPolyDynamic(const InstrumentPolyDynamic& other)
 : m_voices{}
 , m_vol{other.m_vol}
 , m_pan{other.m_pan}
@@ -131,7 +130,7 @@ InstrumentPoly::InstrumentPoly(const InstrumentPoly& other)
     }
 }
 
-InstrumentPoly& InstrumentPoly::operator=(const InstrumentPoly& other)
+InstrumentPolyDynamic& InstrumentPolyDynamic::operator=(const InstrumentPolyDynamic& other)
 {
     if (this != &other)
     {
@@ -150,12 +149,12 @@ InstrumentPoly& InstrumentPoly::operator=(const InstrumentPoly& other)
     return *this;
 }
 
-std::unique_ptr<Device> InstrumentPoly::clone() const
+std::unique_ptr<Device> InstrumentPolyDynamic::clone() const
 {
-    return std::make_unique<InstrumentPoly>(*this);
+    return std::make_unique<InstrumentPolyDynamic>(*this);
 }
 
-void InstrumentPoly::process(float sample_duration, float& out_left, float& out_right)
+void InstrumentPolyDynamic::process(float sample_duration, float& out_left, float& out_right)
 {
     out_left = 0;
     out_right = 0;
@@ -176,9 +175,9 @@ void InstrumentPoly::process(float sample_duration, float& out_left, float& out_
     out_left *= 1 - m_pan;
 }
 
-void InstrumentPoly::note_on(unsigned int voice_num, float freq)
+void InstrumentPolyDynamic::note_on(unsigned int index, float freq)
 {
-    if (voice_num >= m_voices.size())
+    if (index >= m_voices.size())
     {
         // No voice with this number.
         return;
@@ -186,50 +185,50 @@ void InstrumentPoly::note_on(unsigned int voice_num, float freq)
 
     if (freq == 0)
     {
-        m_voices[voice_num]->note_off();
+        m_voices[index]->note_off();
     }
     else
     {
-        m_voices[voice_num]->note_on(freq);
+        m_voices[index]->note_on(freq);
     }
 }
 
-void InstrumentPoly::note_on(unsigned int voice_num)
+void InstrumentPolyDynamic::note_on(unsigned int index)
 {
-    note_on(voice_num, m_voices[voice_num]->freq());
+    note_on(index, m_voices[index]->freq());
 }
 
-void InstrumentPoly::note_off(unsigned int voice_num)
+void InstrumentPolyDynamic::note_off(unsigned int index)
 {
-    m_voices[voice_num]->note_off();
+    m_voices[index]->note_off();
 }
 
-void InstrumentPoly::vol(float vol)
+void InstrumentPolyDynamic::vol(float vol)
 {
     m_vol = vol;
 }
 
-float InstrumentPoly::vol() const
+float InstrumentPolyDynamic::vol() const
 {
     return m_vol;
 }
 
-void InstrumentPoly::pan(float pan)
+void InstrumentPolyDynamic::pan(float pan)
 {
     m_pan = pan;
 }
 
-float InstrumentPoly::pan() const
+float InstrumentPolyDynamic::pan() const
 {
     return m_pan;
 }
 
-void InstrumentPoly::retrigger(bool retrigger)
+void InstrumentPolyDynamic::retrigger(bool retrigger)
 {
     m_retrigger = retrigger;
 }
 
-Voice& InstrumentPoly::voice(size_t index)
+Voice& InstrumentPolyDynamic::voice(size_t index)
 {
     return *m_voices[index];
 }

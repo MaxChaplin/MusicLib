@@ -6,7 +6,7 @@
 
 namespace MusicLib {
 
-VoiceMulti::VoiceMulti(std::vector<std::unique_ptr<Voice>>& voices, Envelope& env, float freq, float vol)
+VoiceMultiDynamic::VoiceMultiDynamic(std::vector<std::unique_ptr<Voice>>& voices, Envelope& env, float freq, float vol)
 : m_voices{}
 , m_env{env.clone()}
 , m_freq{freq}
@@ -19,7 +19,7 @@ VoiceMulti::VoiceMulti(std::vector<std::unique_ptr<Voice>>& voices, Envelope& en
     }
 }
 
-VoiceMulti::VoiceMulti(const VoiceMulti& other)
+VoiceMultiDynamic::VoiceMultiDynamic(const VoiceMultiDynamic& other)
 : m_voices{}
 , m_env{other.m_env->clone()}
 , m_freq{other.m_freq}
@@ -34,7 +34,7 @@ VoiceMulti::VoiceMulti(const VoiceMulti& other)
     }
 }
 
-VoiceMulti& VoiceMulti::operator=(const VoiceMulti& other)
+VoiceMultiDynamic& VoiceMultiDynamic::operator=(const VoiceMultiDynamic& other)
 {
     if (this != &other)
     {
@@ -52,32 +52,42 @@ VoiceMulti& VoiceMulti::operator=(const VoiceMulti& other)
     return *this;
 }
 
-std::unique_ptr<Voice> VoiceMulti::clone() const
+std::unique_ptr<Voice> VoiceMultiDynamic::clone() const
 {
-    return std::make_unique<VoiceMulti>(*this);
+    return std::make_unique<VoiceMultiDynamic>(*this);
 }
 
-Envelope& VoiceMulti::env()
+void VoiceMultiDynamic::env(const Envelope& env)
+{
+    m_env = env.clone();
+}
+
+Envelope& VoiceMultiDynamic::env()
 {
     return *m_env;
 }
 
-void VoiceMulti::freq(float freq)
+const Envelope& VoiceMultiDynamic::env() const
+{
+    return *m_env;
+}
+
+void VoiceMultiDynamic::freq(float freq)
 {
     m_freq = freq;
 }
 
-float VoiceMulti::freq() const
+float VoiceMultiDynamic::freq() const
 {
     return m_freq;
 }
 
-void VoiceMulti::vol(float vol)
+void VoiceMultiDynamic::vol(float vol)
 {
     m_vol = vol;
 }
 
-void VoiceMulti::note_on(float freq)
+void VoiceMultiDynamic::note_on(float freq)
 {
     // Reset the phase unless the note was already on (to prevent clicks).
     if (!is_on())
@@ -95,7 +105,7 @@ void VoiceMulti::note_on(float freq)
     }
 }
 
-void VoiceMulti::note_off()
+void VoiceMultiDynamic::note_off()
 {
     m_env->trig(false);
 
@@ -105,12 +115,12 @@ void VoiceMulti::note_off()
     }
 }
 
-bool VoiceMulti::is_on() const
+bool VoiceMultiDynamic::is_on() const
 {
     return m_env->is_on();
 }
 
-void VoiceMulti::process(float sample_duration, float& output)
+void VoiceMultiDynamic::process(float sample_duration, float& output)
 {
     output = 0;
     for (auto& v : m_voices)
@@ -121,7 +131,7 @@ void VoiceMulti::process(float sample_duration, float& output)
     }
 }
 
-VoiceOsc::VoiceOsc(Oscillator& osc, Envelope& env, float freq, float vol)
+VoiceOscDynamic::VoiceOscDynamic(Oscillator& osc, Envelope& env, float freq, float vol)
 : m_osc{osc.clone()}
 , m_env{env.clone()}
 , m_freq{freq}
@@ -129,7 +139,7 @@ VoiceOsc::VoiceOsc(Oscillator& osc, Envelope& env, float freq, float vol)
 , m_vol{vol}
 {}
 
-VoiceOsc::VoiceOsc(const VoiceOsc& other)
+VoiceOscDynamic::VoiceOscDynamic(const VoiceOscDynamic& other)
 : m_osc{other.m_osc->clone()}
 , m_env{other.m_env->clone()}
 , m_freq{other.m_freq}
@@ -139,7 +149,7 @@ VoiceOsc::VoiceOsc(const VoiceOsc& other)
 
 }
 
-VoiceOsc& VoiceOsc::operator=(const VoiceOsc& other)
+VoiceOscDynamic& VoiceOscDynamic::operator=(const VoiceOscDynamic& other)
 {
     if (this != &other)
     {
@@ -152,32 +162,42 @@ VoiceOsc& VoiceOsc::operator=(const VoiceOsc& other)
     return *this;
 }
 
-std::unique_ptr<Voice> VoiceOsc::clone() const
+std::unique_ptr<Voice> VoiceOscDynamic::clone() const
 {
-    return std::make_unique<VoiceOsc>(*m_osc, *m_env, m_freq, m_vol);
+    return std::make_unique<VoiceOscDynamic>(*m_osc, *m_env, m_freq, m_vol);
 }
 
-Envelope& VoiceOsc::env()
+void VoiceOscDynamic::env(const Envelope& env)
+{
+    m_env = env.clone();
+}
+
+Envelope& VoiceOscDynamic::env()
 {
     return *m_env;
 }
 
-void VoiceOsc::freq(float freq)
+const Envelope& VoiceOscDynamic::env() const
+{
+    return *m_env;
+}
+
+void VoiceOscDynamic::freq(float freq)
 {
     m_freq = freq;
 }
 
-float VoiceOsc::freq() const
+float VoiceOscDynamic::freq() const
 {
     return m_freq;
 }
 
-void VoiceOsc::vol(float vol)
+void VoiceOscDynamic::vol(float vol)
 {
     m_vol = vol;
 }
 
-void VoiceOsc::note_on(float freq)
+void VoiceOscDynamic::note_on(float freq)
 {
     // Reset the phase unless the note was already on (to prevent clicks).
     if (!is_on())
@@ -189,17 +209,17 @@ void VoiceOsc::note_on(float freq)
     m_env->trig(true);
 }
 
-void VoiceOsc::note_off()
+void VoiceOscDynamic::note_off()
 {
     m_env->trig(false);
 }
 
-bool VoiceOsc::is_on() const
+bool VoiceOscDynamic::is_on() const
 {
     return m_env->is_on();
 }
 
-void VoiceOsc::process(float sample_duration, float& output)
+void VoiceOscDynamic::process(float sample_duration, float& output)
 {
     output = m_vol * m_osc->value(m_phase) * m_env->process(sample_duration);
 
@@ -211,14 +231,9 @@ void VoiceOsc::process(float sample_duration, float& output)
     }
 }
 
-void VoiceOsc::osc(Oscillator& osc)
+void VoiceOscDynamic::osc(Oscillator& osc)
 {
     m_osc = osc.clone();
 }
-
-// Oscillator& VoiceOsc::osc()
-// {
-//     return *m_osc;
-// }
 
 }

@@ -7,6 +7,8 @@
 
 #include <functional>
 #include <memory>
+#include <type_traits>
+#include <stdexcept>
 
 namespace MusicLib {
     
@@ -23,7 +25,9 @@ public:
 
     virtual std::unique_ptr<Voice> clone() const = 0;
 
+    virtual void env(const Envelope& env) = 0;
     virtual Envelope& env() = 0;
+    virtual const Envelope& env() const = 0;
 
     virtual void freq(float m_freq) = 0;
     virtual float freq() const = 0;
@@ -48,21 +52,176 @@ public:
 /**
  * @brief An adapter class for playing multiple voices in unison.
  * 
+ * @tparam V interior voice type
+ * @tparam E envelope type
  */
+template <typename V = Voice, typename E = Envelope>
 class VoiceMulti : public Voice
 {
 public:
-    explicit VoiceMulti(std::vector<std::unique_ptr<Voice>>& voices,
-                        Envelope& env, float freq = 440, float vol = 1.);
+    explicit VoiceMulti(std::vector<std::unique_ptr<V>>& voices,
+                        E& env, float freq = 440, float vol = 1.)
+    : m_voices{}
+    , m_env{env}
+    , m_freq{freq}
+    , m_phase{0}
+    , m_vol{vol}
+    {
+        for (const auto& v : voices)
+        {
+            m_voices.push_back(v.clone());
+        }
+    }
+
     ~VoiceMulti() noexcept = default;
-    VoiceMulti(const VoiceMulti& other);
-    VoiceMulti& operator=(const VoiceMulti& other);
+    VoiceMulti(const VoiceMulti& other)
+    : m_voices{}
+    , m_env{other.m_env}
+    , m_freq{other.m_freq}
+    , m_phase{other.m_phase}
+    , m_vol{other.m_vol}
+    {
+        m_voices.reserve(other.m_voices.size());
+
+        for (const auto& v : other.m_voices)
+        {
+            m_voices.push_back(v->clone());
+        }
+    }
+
+    VoiceMulti& operator=(const VoiceMulti& other)
+    {
+        if (this != &other)
+        {
+            m_voices.clear();
+            for (const auto& v : other.m_voices)
+            {
+                m_voices.push_back(v->clone());
+            }
+
+            m_env = other.m_env;
+            m_freq = other.m_freq;
+            m_phase = other.m_phase;
+            m_vol = other.m_vol;
+        }
+        return *this;
+    }
+
+
     VoiceMulti(VoiceMulti&&) noexcept = default;
     VoiceMulti& operator=(VoiceMulti&&) noexcept = default;
 
+    std::unique_ptr<Voice> clone() const override
+    {
+        return std::make_unique<VoiceMulti>(*this);
+    }
+
+    void env(const E& env) override
+    {
+        m_env = env;
+    }
+
+    E& env() override
+    {
+        return m_env;
+    }
+
+    const E& env() const override
+    {
+        return m_env;
+    }
+
+    Voice& voice(size_t index);
+    
+    template <typename V2>
+    V2& voice(size_t index)
+    {
+        return static_cast<V2&>(m_voices[index]);
+    }
+
+    void freq(float freq) override
+    {
+        m_freq = freq;
+    }
+
+    float freq() const override
+    {
+        return m_freq;
+    }
+
+    void vol(float vol) override
+    {
+        m_vol = vol;
+    }
+
+    void note_on(float freq) override
+    {
+        // Reset the phase unless the note was already on (to prevent clicks).
+        if (!is_on())
+        {
+            m_phase = 0;
+        }
+
+        m_freq = freq;
+        m_env.trig(true);
+
+        for (auto& v : m_voices)
+        {
+            v->freq(freq);
+            v->env().trig(true);
+        }
+    }
+
+    void note_off() override
+    {
+        m_env.trig(false);
+
+        for (auto& v : m_voices)
+        {
+            v->env().trig(false);
+        }
+    }
+
+    bool is_on() const override
+    {
+        return m_env.is_on();
+    }
+
+    void process(float sample_duration, float& output) override
+    {
+        output = 0;
+        for (auto& v : m_voices)
+        {
+            float temp;
+            v->process(sample_duration, temp);
+            output += m_vol * temp;
+        }
+    }
+
+private:
+    std::vector<std::unique_ptr<Voice>> m_voices;
+    E m_env;
+    float m_freq;
+    float m_phase;
+    float m_vol;
+};
+
+class VoiceMultiDynamic : public Voice
+{
+public:
+    explicit VoiceMultiDynamic(std::vector<std::unique_ptr<Voice>>& voices,
+                        Envelope& env, float freq = 440, float vol = 1.);
+    ~VoiceMultiDynamic() noexcept = default;
+    VoiceMultiDynamic(const VoiceMultiDynamic& other);
+    VoiceMultiDynamic& operator=(const VoiceMultiDynamic& other);
+    VoiceMultiDynamic(VoiceMultiDynamic&&) noexcept = default;
+    VoiceMultiDynamic& operator=(VoiceMultiDynamic&&) noexcept = default;
+
     std::unique_ptr<Voice> clone() const override;
 
+    void env(const Envelope& env) override;
     Envelope& env() override;
+    const Envelope& env() const override;
 
     template <typename E>
     E& env(size_t index)
@@ -101,21 +260,150 @@ private:
 /**
  * @brief A voice based around an oscillator object, with a single velocity
  * envelope.
+ * 
+ * @tparam O Oscillator type 
+ * @tparam E Envelopy type
  */
+template <typename O = Oscillator, typename E = Envelope>
 class VoiceOsc : public Voice
 {
 public:
-    explicit VoiceOsc(Oscillator& m_osc, Envelope& env, float freq = 440,
-                        float vol = 1.);
+    explicit VoiceOsc(O& osc, E& env, float freq = 440,
+                        float vol = 1.)
+    : m_osc{osc}
+    , m_env{env}
+    , m_freq{freq}
+    , m_phase{0}
+    , m_vol{vol}
+    {
+        static_assert(std::is_base_of_v<Oscillator, O>, "class O must be derived from Oscillator");
+        static_assert(std::is_base_of_v<Envelope, E>, "class E must be derived from Envelope");
+    }
+
     ~VoiceOsc() noexcept = default;
-    VoiceOsc(const VoiceOsc& other);
-    VoiceOsc& operator=(const VoiceOsc& other);
-    VoiceOsc(VoiceOsc&&) noexcept = default;
-    VoiceOsc& operator=(VoiceOsc&&) noexcept = default;
+
+    std::unique_ptr<Voice> clone() const override
+    {
+        return std::make_unique<VoiceOsc>(*this);
+    }
+
+    void env(const Envelope& env) override
+    {
+        if (typeid(env) == typeid(E))
+        {
+            m_env = static_cast<const E&>(env);
+        }
+        else
+        {
+            throw std::invalid_argument("invalid envelope type");
+        }
+        
+    }
+
+    E& env() override
+    {
+        return m_env;
+    }
+
+    const E& env() const override
+    {
+        return m_env;
+    }
+
+
+    void freq(float freq) override
+    {
+        m_freq = freq;
+    }
+
+    float freq() const override
+    {
+        return m_freq;
+    }
+
+    void vol(float vol) override
+    {
+        m_vol = vol;
+    }
+
+    void note_on(float freq) override
+    {
+        // Reset the phase unless the note was already on (to prevent clicks).
+        if (!is_on())
+        {
+            m_phase = 0;
+        }
+
+        m_freq = freq;
+        m_env.trig(true);
+    }
+
+    void note_off() override
+    {
+        m_env.trig(false);
+    }
+
+    bool is_on() const override
+    {
+        return m_env.is_on();
+    }
+
+    void process(float sample_duration, float& output) override
+    {
+        output = m_vol * m_osc.value(m_phase) * m_env.process(sample_duration);
+
+        // Propagate phase.
+        m_phase += sample_duration * m_freq;
+        if (m_phase >= 1)
+        {
+            m_phase -= 1;
+        }
+    }
+
+    void osc(Oscillator& osc)
+    {
+        m_osc = osc;
+    }
+
+    O& osc()
+    {
+        return m_osc;
+    }
+
+    const O& osc() const
+    {
+        return m_osc;
+    }
+
+private:
+    O m_osc;
+    E m_env;
+    float m_freq;
+    float m_phase;
+    float m_vol;
+};
+
+/**
+ * @brief A voice based around an oscillator object, with a single velocity
+ * envelope. The oscillator and envelope can be set to descendant of the
+ * Oscillator and Envelope classes respectively.
+ * 
+ */
+class VoiceOscDynamic : public Voice
+{
+public:
+    explicit VoiceOscDynamic(Oscillator& m_osc, Envelope& env, float freq = 440, float vol = 1.);
+    ~VoiceOscDynamic() noexcept = default;
+    VoiceOscDynamic(const VoiceOscDynamic& other);
+    VoiceOscDynamic& operator=(const VoiceOscDynamic& other);
+    VoiceOscDynamic(VoiceOscDynamic&&) noexcept = default;
+    VoiceOscDynamic& operator=(VoiceOscDynamic&&) noexcept = default;
 
     std::unique_ptr<Voice> clone() const override;
 
+    void env(const Envelope& env) override;
     Envelope& env() override;
+    const Envelope& env() const override;
 
     template <typename E>
     E& env()

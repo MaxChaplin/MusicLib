@@ -3,7 +3,7 @@
 #include "audio_manager_portaudio.hpp"
 #include "command_stream.hpp"
 #include "instrument.hpp"
-#include "device_manager.hpp"
+#include "instrument_manager.hpp"
 #include "sequencer.hpp"
 #include "time_manager.hpp"
 #include "pitch.hpp"
@@ -22,6 +22,9 @@
 #define BUFFER_SIZE 512
 #define NUM_INSTRUMENTS_MAX 32
 
+using VoiceDemo = MusicLib::VoiceOsc<MusicLib::OscillatorSwitch, MusicLib::EnvelopeADSR>;
+using InsDemo = MusicLib::InstrumentMono<VoiceDemo>;
+using InsMgrDemo = MusicLib::InstrumentManager<InsDemo>;
 /**
  * @brief 
  * 
@@ -178,7 +181,7 @@ void handle_command_stream(CommandDemo& cmd [[maybe_unused]], MusicLib::CommandS
 
 }
 
-void handle_instrument_manager(CommandDemo& cmd, MusicLib::InstrumentManager& ins_mgr)
+void handle_instrument_manager(CommandDemo& cmd, InsMgrDemo& ins_mgr)
 {
     float freq;
 
@@ -189,13 +192,13 @@ void handle_instrument_manager(CommandDemo& cmd, MusicLib::InstrumentManager& in
         if (freq > 0)
         {
             ins_mgr
-            .instrument<MusicLib::InstrumentMono>(cmd.wave.ins)
+            .instrument(cmd.wave.ins)
             .note_on(freq);
         }
         else
         {
             ins_mgr
-            .instrument<MusicLib::InstrumentMono>(cmd.wave.ins)
+            .instrument(cmd.wave.ins)
             .note_off();
         }
 
@@ -216,40 +219,41 @@ void handle_instrument_manager(CommandDemo& cmd, MusicLib::InstrumentManager& in
     
     case CommandDemo::Type::Waveshape:
         ins_mgr
-        .instrument<MusicLib::InstrumentMono>(cmd.wave.ins)
-        .voice<MusicLib::VoiceOsc>()
-        .osc<MusicLib::OscillatorSwitch>()
+        .instrument(cmd.wave.ins)
+        .voice()
+        .osc()
         .select((int) cmd.wave.shape);
         return;
 
     case CommandDemo::Type::Attack:
         ins_mgr
-        .instrument<MusicLib::InstrumentMono>(cmd.wave.ins)
-        .voice<MusicLib::VoiceOsc>()
-        .env<MusicLib::EnvelopeADSR>()
+        .instrument(cmd.wave.ins)
+        .voice()
+        .env()
         .attack(cmd.param_time.duration);
-        // ins_mgr.instrument(cmd.wave.ins)
         return;
     
     case CommandDemo::Type::Decay:
         ins_mgr
-        .instrument<MusicLib::InstrumentMono>(cmd.wave.ins)
-        .voice<MusicLib::VoiceOsc>()
-        .env<MusicLib::EnvelopeADSR>()
+        .instrument(cmd.wave.ins)
+        .voice()
+        .env()
         .decay(cmd.param_time.duration);
         return;
     
     case CommandDemo::Type::Sustain:
-        ins_mgr.instrument<MusicLib::InstrumentMono>(cmd.wave.ins)
-        .voice<MusicLib::VoiceOsc>()
-        .env<MusicLib::EnvelopeADSR>()
+        ins_mgr
+        .instrument(cmd.wave.ins)
+        .voice()
+        .env()
         .sustain(cmd.param_float.amount);
         return;
 
     case CommandDemo::Type::Release:
-        ins_mgr.instrument<MusicLib::InstrumentMono>(cmd.wave.ins)
-        .voice<MusicLib::VoiceOsc>()
-        .env<MusicLib::EnvelopeADSR>()
+        ins_mgr
+        .instrument(cmd.wave.ins)
+        .voice()
+        .env()
         .release(cmd.param_time.duration);
         return;
 
@@ -288,10 +292,10 @@ int main(int argc, char *argv[])
 
     MusicLib::CommandProcessorBasic cmd_processor;
     cmd_processor.set_command_stream_handler<CommandDemo, MusicLib::CommandStreamBasic>(handle_command_stream);
-    cmd_processor.set_device_manager_handler<CommandDemo, MusicLib::InstrumentManager>(handle_instrument_manager);
+    cmd_processor.set_device_manager_handler<CommandDemo, InsMgrDemo>(handle_instrument_manager);
     cmd_processor.set_time_handler<CommandDemo, MusicLib::TimeManagerEventBased>(handle_time_manager);
 
-    MusicLib::InstrumentManager ins_mgr{BUFFER_SIZE};
+    InsMgrDemo ins_mgr{BUFFER_SIZE};
     MusicLib::OscillatorBasic osc_triangle(MusicLib::osc_triangle);
     MusicLib::OscillatorBasic osc_saw(MusicLib::osc_saw);
     MusicLib::OscillatorBasic osc_square(MusicLib::osc_square);
@@ -302,8 +306,8 @@ int main(int argc, char *argv[])
     osc_switch.add_osc(osc_square);
 
     MusicLib::EnvelopeADSR env{.01, 2, .2, .5};
-    MusicLib::VoiceOsc voice{osc_switch, env};
-    MusicLib::InstrumentMono ins{voice, 1};
+    VoiceDemo voice{osc_switch, env};
+    InsDemo ins{voice, 1};
 
     for (size_t i = 0; i <= max_ins_num; ++i)
     {
