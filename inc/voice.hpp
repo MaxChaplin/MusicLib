@@ -4,6 +4,7 @@
 #include "envelope.hpp"
 #include "osc.hpp"
 #include "wave_shaper.hpp"
+#include "util.hpp"
 
 #include <functional>
 #include <memory>
@@ -49,6 +50,11 @@ public:
     virtual void process(float sample_duration, float& output) = 0;
 };
 
+
+
+
+
+
 /**
  * @brief An adapter class for playing multiple voices in unison.
  * 
@@ -62,7 +68,7 @@ public:
     explicit VoiceMulti(std::vector<std::unique_ptr<V>>& voices,
                         E& env, float freq = 440, float vol = 1.)
     : m_voices{}
-    , m_env{env}
+    , m_env{Util::clone<E>(env)}
     , m_freq{freq}
     , m_phase{0}
     , m_vol{vol}
@@ -76,7 +82,7 @@ public:
     ~VoiceMulti() noexcept = default;
     VoiceMulti(const VoiceMulti& other)
     : m_voices{}
-    , m_env{other.m_env}
+    , m_env{Util::clone<E>(other.m_env)}
     , m_freq{other.m_freq}
     , m_phase{other.m_phase}
     , m_vol{other.m_vol}
@@ -85,7 +91,7 @@ public:
 
         for (const auto& v : other.m_voices)
         {
-            m_voices.push_back(v->clone());
+            m_voices.push_back(Util::clone<V>(*v));
         }
     }
 
@@ -96,10 +102,10 @@ public:
             m_voices.clear();
             for (const auto& v : other.m_voices)
             {
-                m_voices.push_back(v->clone());
+                m_voices.push_back(Util::clone<V>(*v));
             }
 
-            m_env = other.m_env;
+            m_env = Util::clone<E>(*other.m_env);
             m_freq = other.m_freq;
             m_phase = other.m_phase;
             m_vol = other.m_vol;
@@ -116,19 +122,19 @@ public:
         return std::make_unique<VoiceMulti>(*this);
     }
 
-    void env(const E& env) override
+    void env(const Envelope& env) override
     {
-        m_env = env;
+        m_env = clone<E>(env);
     }
 
     E& env() override
     {
-        return m_env;
+        return *m_env;
     }
 
     const E& env() const override
     {
-        return m_env;
+        return *m_env;
     }
 
     Voice& voice(size_t index);
@@ -163,7 +169,7 @@ public:
         }
 
         m_freq = freq;
-        m_env.trig(true);
+        m_env->trig(true);
 
         for (auto& v : m_voices)
         {
@@ -174,7 +180,7 @@ public:
 
     void note_off() override
     {
-        m_env.trig(false);
+        m_env->trig(false);
 
         for (auto& v : m_voices)
         {
@@ -184,7 +190,7 @@ public:
 
     bool is_on() const override
     {
-        return m_env.is_on();
+        return m_env->is_on();
     }
 
     void process(float sample_duration, float& output) override
@@ -199,59 +205,8 @@ public:
     }
 
 private:
-    std::vector<std::unique_ptr<Voice>> m_voices;
-    E m_env;
-    float m_freq;
-    float m_phase;
-    float m_vol;
-};
-
-class VoiceMultiDynamic : public Voice
-{
-public:
-    explicit VoiceMultiDynamic(std::vector<std::unique_ptr<Voice>>& voices,
-                        Envelope& env, float freq = 440, float vol = 1.);
-    ~VoiceMultiDynamic() noexcept = default;
-    VoiceMultiDynamic(const VoiceMultiDynamic& other);
-    VoiceMultiDynamic& operator=(const VoiceMultiDynamic& other);
-    VoiceMultiDynamic(VoiceMultiDynamic&&) noexcept = default;
-    VoiceMultiDynamic& operator=(VoiceMultiDynamic&&) noexcept = default;
-
-    std::unique_ptr<Voice> clone() const override;
-
-    void env(const Envelope& env) override;
-    Envelope& env() override;
-    const Envelope& env() const override;
-
-    template <typename E>
-    E& env(size_t index)
-    {
-        return static_cast<E&>(*m_env);
-    }
-
-    Voice& voice(size_t index);
-    
-    template <typename V>
-    V& voice(size_t index)
-    {
-        return static_cast<V&>(*m_voices[index]);
-    }
-
-    void freq(float m_freq) override;
-    float freq() const override;
-
-    void vol(float m_vol) override;
-
-    void note_on(float freq) override;
-    void note_off() override;
-
-    bool is_on() const override;
-
-    void process(float sample_duration, float& output) override;
-
-private:
-    std::vector<std::unique_ptr<Voice>> m_voices;
-    std::unique_ptr<Envelope> m_env;
+    std::vector<std::unique_ptr<V>> m_voices;
+    std::unique_ptr<E> m_env;
     float m_freq;
     float m_phase;
     float m_vol;
@@ -261,17 +216,26 @@ private:
  * @brief A voice based around an oscillator object, with a single velocity
  * envelope.
  * 
- * @tparam O Oscillator type 
- * @tparam E Envelopy type
+ * Each of the template parameters can be used in one of three ways. If not set,
+ * any oscillator/envelope can be used. If set to an abstract interface, only
+ * descendants of the interface can be used. If set to a concrete class, only
+ * it can be used (provided concrete classes are not inherited).
+ * 
+ * In the first two cases, a getter templates needs the appropriate type as a 
+ * template parameter in order to use a derived class' method, but not when
+ * using the abstract interface's methods. In the last case, the getters don't
+ * need template parameters.
+ * 
+ * @tparam O Oscillator type (Oscillator by default)
+ * @tparam E Envelopy type (Envelope by default)
  */
 template <typename O = Oscillator, typename E = Envelope>
 class VoiceOsc : public Voice
 {
 public:
-    explicit VoiceOsc(O& osc, E& env, float freq = 440,
-                        float vol = 1.)
-    : m_osc{osc}
-    , m_env{env}
+    explicit VoiceOsc(O& osc, E& env, float freq = 440, float vol = 1.)
+    : m_osc{Util::clone<O>(osc)}
+    , m_env{Util::clone<E>(env)}
     , m_freq{freq}
     , m_phase{0}
     , m_vol{vol}
@@ -282,6 +246,32 @@ public:
 
     ~VoiceOsc() noexcept = default;
 
+    VoiceOsc(const VoiceOsc& other)
+    : m_osc{Util::clone<O>(*other.m_osc)}
+    , m_env{Util::clone<E>(*other.m_env)}
+    , m_freq{other.m_freq}
+    , m_phase{other.m_phase}
+    , m_vol{other.m_vol}
+    {
+
+    }
+
+    VoiceOsc& operator=(const VoiceOsc& other)
+    {
+        if (this != &other)
+        {
+            m_osc = Util::clone<O>(*other.m_osc);
+            m_env = Util::clone<E>(*other.m_env);
+            m_freq = other.m_freq;
+            m_phase = other.m_phase;
+            m_vol = other.m_vol;
+        }
+        return *this;
+    }
+    
+    VoiceOsc(VoiceOsc&&) noexcept = default;
+    VoiceOsc& operator=(VoiceOsc&&) noexcept = default;
+
     std::unique_ptr<Voice> clone() const override
     {
         return std::make_unique<VoiceOsc>(*this);
@@ -289,27 +279,24 @@ public:
 
     void env(const Envelope& env) override
     {
-        if (typeid(env) == typeid(E))
-        {
-            m_env = static_cast<const E&>(env);
-        }
-        else
-        {
-            throw std::invalid_argument("invalid envelope type");
-        }
-        
+        m_env = Util::clone<E>(env);        
     }
 
     E& env() override
     {
-        return m_env;
+        return *m_env;
     }
 
     const E& env() const override
     {
-        return m_env;
+        return *m_env;
     }
 
+    template <typename E2 = E>
+    E2& env()
+    {
+        return static_cast<E2&>(*m_env);
+    }
 
     void freq(float freq) override
     {
@@ -335,22 +322,22 @@ public:
         }
 
         m_freq = freq;
-        m_env.trig(true);
+        m_env->trig(true);
     }
 
     void note_off() override
     {
-        m_env.trig(false);
+        m_env->trig(false);
     }
 
     bool is_on() const override
     {
-        return m_env.is_on();
+        return m_env->is_on();
     }
 
     void process(float sample_duration, float& output) override
     {
-        output = m_vol * m_osc.value(m_phase) * m_env.process(sample_duration);
+        output = m_vol * m_osc->value(m_phase) * m_env->process(sample_duration);
 
         // Propagate phase.
         m_phase += sample_duration * m_freq;
@@ -360,172 +347,30 @@ public:
         }
     }
 
-    void osc(Oscillator& osc)
+    void osc(O& osc)
     {
-        m_osc = osc;
+        m_osc = clone<O>(osc);
     }
 
     O& osc()
     {
-        return m_osc;
+        return *m_osc;
     }
 
     const O& osc() const
     {
-        return m_osc;
+        return *m_osc;
     }
 
-private:
-    O m_osc;
-    E m_env;
-    float m_freq;
-    float m_phase;
-    float m_vol;
-};
-
-/**
- * @brief A voice based around an oscillator object, with a single velocity
- * envelope. The oscillator and envelope can be set to descendant of the
- * Oscillator and Envelope classes respectively.
- * 
- */
-class VoiceOscDynamic : public Voice
-{
-public:
-    explicit VoiceOscDynamic(Oscillator& m_osc, Envelope& env, float freq = 440, float vol = 1.);
-    ~VoiceOscDynamic() noexcept = default;
-    VoiceOscDynamic(const VoiceOscDynamic& other);
-    VoiceOscDynamic& operator=(const VoiceOscDynamic& other);
-    VoiceOscDynamic(VoiceOscDynamic&&) noexcept = default;
-    VoiceOscDynamic& operator=(VoiceOscDynamic&&) noexcept = default;
-
-    std::unique_ptr<Voice> clone() const override;
-
-    void env(const Envelope& env) override;
-    Envelope& env() override;
-    const Envelope& env() const override;
-
-    template <typename E>
-    E& env()
+    template <typename O2 = Oscillator>
+    O2& osc()
     {
-        return static_cast<E&>(*m_env);
-    }
-
-    void freq(float freq) override;
-    float freq() const override;
-
-    void vol(float vol) override;
-
-    void note_on(float freq) override;
-    void note_off() override;
-
-    bool is_on() const override;
-
-    void process(float sample_duration, float& output) override;
-
-    void osc(Oscillator& osc);
-    // Oscillator& osc();
-
-    template <typename O = Oscillator>
-    O& osc()
-    {
-        return static_cast<O&>(*m_osc);
+        return static_cast<O2&>(*m_osc);
     }
 
 private:
-    std::unique_ptr<Oscillator> m_osc;
-    std::unique_ptr<Envelope> m_env;
-    float m_freq;
-    float m_phase;
-    float m_vol;
-};
-
-/**
- * @brief The simplest FM synth.
- * 
- */
-class VoiceFM2 : public Voice
-{
-public:
-    explicit VoiceFM2(Oscillator& carrier, Oscillator& modulator, Envelope& env,
-        float freq_carrier = 440, float freq_modulator = 440,
-        float fm_level = 0, float vol = 1., unsigned int oversamping = 1);
-    ~VoiceFM2() noexcept = default;
-    VoiceFM2(const VoiceFM2& other);
-    VoiceFM2& operator=(const VoiceFM2& other);
-    VoiceFM2(VoiceFM2&&) noexcept = default;
-    VoiceFM2& operator=(VoiceFM2&&) noexcept = default;
-
-    std::unique_ptr<Voice> clone() const override;
-
-    Envelope& env() override;
-
-    template <typename E>
-    E& env()
-    {
-        return static_cast<E&>(*m_env);
-    }
-
-    void freq(float m_freq) override;
-    float freq() const override;
-
-    void vol(float m_vol) override;
-
-    void note_on(float freq) override;
-    void note_off() override;
-
-    bool is_on() const override;
-
-    void process(float sample_duration, float& output) override;
-
-private:
-    std::unique_ptr<Oscillator> m_carrier;
-    std::unique_ptr<Oscillator> m_modulator;
-    std::unique_ptr<Envelope> m_env;
-
-    float m_freq;
-    float m_phase;
-    float m_vol;
-    float m_fm_level;
-    unsigned int m_oversamping;
-};
-
-/**
- * @brief A phase distortion synth. Passes the oscillator's phase parameter
- * through distortion function, which causes the wave shape to get
- * distorted.
- */
-class VoicePD : public Voice
-{
-public:
-    explicit VoicePD(Oscillator& m_osc, WaveShaper& phase_func,
-        Envelope& env, float freq = 440, float vol = 1.);
-    ~VoicePD() noexcept = default;
-    VoicePD(const VoicePD& other);
-    VoicePD& operator=(const VoicePD& other);
-    VoicePD(VoicePD&&) noexcept = default;
-    VoicePD& operator=(VoicePD&&) noexcept = default;
-
-    std::unique_ptr<Voice> clone() const override;
-
-    Envelope& env() override;
-
-    void freq(float freq) override;
-    float freq() const override;
-    
-    void vol(float vol) override;
-
-    void note_on(float freq) override;
-    void note_off() override;
-
-    bool is_on() const override;
-
-    void process(float sample_duration, float& output) override;
-
-private:
-    std::unique_ptr<Oscillator> m_osc;
-    std::unique_ptr<WaveShaper> m_phase_func;
-    std::unique_ptr<Envelope> m_env;
+    std::unique_ptr<O> m_osc;
+    std::unique_ptr<E> m_env;
     float m_freq;
     float m_phase;
     float m_vol;

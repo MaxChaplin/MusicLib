@@ -1,7 +1,12 @@
+#ifndef UTIL_H_
+#define UTIL_H_
+
 #include <memory>
 #include <type_traits>
 
 namespace MusicLib {
+
+namespace Util {
 
 /**
  * @brief Create a copy of the given object, encased in a smart pointer of
@@ -22,3 +27,7 @@ std::unique_ptr<T> clone(const B& obj)
 }
 
 }
+
+}
+
+#endif // UTIL_H_

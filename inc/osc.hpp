@@ -1,9 +1,12 @@
 #ifndef OSC_H_
 #define OSC_H_
 
+#include "util.hpp"
+
 #include <functional>
 #include <vector>
 #include <memory>
+#include <stdexcept>
 
 namespace MusicLib {
 
@@ -36,24 +39,85 @@ public:
 };
 
 /**
- * @brief An oscillator class that can be switched between multiple given
- *        oscillators.
+ * @brief An oscillator that can be switched between multiple given oscillators.
+ * 
+ * @tparam O Contained oscillator type
  */
+template <typename O = Oscillator>
 class OscillatorSwitch : public Oscillator
 {
 public:
-    explicit OscillatorSwitch(unsigned int osc_index = 0);
-    explicit OscillatorSwitch(std::vector<std::unique_ptr<Oscillator>>& oscs, unsigned int osc_index = 0);
-    explicit OscillatorSwitch(const OscillatorSwitch& other);
-    OscillatorSwitch& operator=(const OscillatorSwitch& other);
+    explicit OscillatorSwitch(unsigned int osc_index = 0)
+    : m_oscs{}
+    , m_osc_index{osc_index}
+    {
+
+    }
+
+    explicit OscillatorSwitch(std::vector<std::unique_ptr<Oscillator>>& oscs, unsigned int osc_index = 0)
+    : m_oscs{}
+    , m_osc_index{osc_index}
+    {
+        for (const auto& o : oscs)
+        {
+            m_oscs.emplace_back(o->clone());
+        }
+    }
+
+    explicit OscillatorSwitch(const OscillatorSwitch& other)
+    : m_oscs{}
+    , m_osc_index{other.m_osc_index}
+    {
+        for (const auto& o : other.m_oscs)
+        {
+            m_oscs.emplace_back(o->clone());
+        }
+    }
+
+    OscillatorSwitch& operator=(const OscillatorSwitch& other)
+    {
+        if (this != &other)
+        {
+            m_oscs = std::vector<std::unique_ptr<Oscillator>>{};
+            for (const auto& v : other.m_oscs)
+            {
+                m_oscs.emplace_back(v->clone());
+            }
+
+            m_osc_index = other.m_osc_index;
+        }
+        return *this;
+    }
+
     ~OscillatorSwitch() noexcept = default;
 
-    std::unique_ptr<Oscillator> clone() const override;
+    std::unique_ptr<Oscillator> clone() const override
+    {
+        return std::make_unique<OscillatorSwitch>(*this);
+    }
 
-    float value(float phase) const override;
 
-    void add_osc(Oscillator& osc);
-    void select(unsigned int osc_index);
+    float value(float phase) const override
+    {
+        return m_oscs[m_osc_index]->value(phase);
+    }
+
+    void add_osc(Oscillator& osc)
+    {
+        m_oscs.emplace_back(Util::clone<O>(osc));
+    }
+
+    void select(unsigned int osc_index)
+    {
+        if (osc_index >= m_oscs.size())
+        {
+            throw std::invalid_argument("oscillator index is out of bounds");
+        }
+        else
+        {
+            m_osc_index = osc_index;
+        }
+    }
 
 private:
     std::vector<std::unique_ptr<Oscillator>> m_oscs;

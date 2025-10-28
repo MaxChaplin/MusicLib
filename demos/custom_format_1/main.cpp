@@ -22,9 +22,11 @@
 #define BUFFER_SIZE 512
 #define NUM_INSTRUMENTS_MAX 32
 
-using VoiceDemo = MusicLib::VoiceOsc<MusicLib::OscillatorSwitch, MusicLib::EnvelopeADSR>;
+using OscDemo = MusicLib::OscillatorSwitch<MusicLib::OscillatorBasic>;
+using VoiceDemo = MusicLib::VoiceOsc<OscDemo, MusicLib::EnvelopeADSR>;
 using InsDemo = MusicLib::InstrumentMono<VoiceDemo>;
 using InsMgrDemo = MusicLib::InstrumentManager<InsDemo>;
+
 /**
  * @brief 
  * 
@@ -300,7 +302,7 @@ int main(int argc, char *argv[])
     MusicLib::OscillatorBasic osc_saw(MusicLib::osc_saw);
     MusicLib::OscillatorBasic osc_square(MusicLib::osc_square);
     
-    MusicLib::OscillatorSwitch osc_switch;
+    OscDemo osc_switch;
     osc_switch.add_osc(osc_triangle);
     osc_switch.add_osc(osc_saw);
     osc_switch.add_osc(osc_square);

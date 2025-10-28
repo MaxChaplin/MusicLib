@@ -42,7 +42,7 @@ public:
 
     void clone_instrument(I& instrument)
     {
-        m_instruments.push_back(clone<I>(instrument));
+        m_instruments.push_back(Util::clone<I>(instrument));
     }
 
 
