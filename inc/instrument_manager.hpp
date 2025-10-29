@@ -1,7 +1,7 @@
 #ifndef INSTRUMENT_MANAGER_H_
 #define INSTRUMENT_MANAGER_H_
 
-#include "device_manager.hpp"
+#include "device.hpp"
 #include "util.hpp"
 
 #include <vector>
@@ -15,7 +15,7 @@ namespace MusicLib {
  * @tparam I an implementation of the Instrument interface
  */
 template <typename I = Instrument>
-class InstrumentManager : public DeviceManagerOut
+class InstrumentManager : public DeviceOut
 {
 public:
     explicit InstrumentManager(size_t buffer_size)
@@ -25,6 +25,37 @@ public:
     {}
 
     ~InstrumentManager() noexcept = default;
+    
+    InstrumentManager(const InstrumentManager& other)
+    : m_instruments{}
+    , m_buffer{other.m_buffer}
+    , m_buffer_cursor{other.m_buffer_cursor}    
+    {
+        m_instruments.reserve(other.m_instruments.size());
+
+        for (const auto& ins : other.m_instruments)
+        {
+            m_instruments.push_back(Util::clone<I>(*ins));
+        }
+    }
+
+    InstrumentManager& operator=(const InstrumentManager& other)
+    {
+        if (this != &other)
+        {
+            m_instruments.clear();
+            for (const auto& ins : other.m_instruments)
+            {
+                m_instruments.push_back(Util::clone<I>(*ins));
+            }
+            m_buffer = other.m_buffer;
+            m_buffer_cursor = other.m_buffer_cursor;
+        }
+        return *this;
+    }
+
+    InstrumentManager(InstrumentManager&&) noexcept = default;
+    InstrumentManager& operator=(InstrumentManager&&) noexcept = default;
 
     /**
      * @brief Return a reference to the numbered instrument. If a template
@@ -38,6 +69,11 @@ public:
     I2& instrument(unsigned int index) const
     {
         return static_cast<I2&>(*m_instruments[index]); 
+    }
+
+    std::unique_ptr<Device> clone() const
+    {
+        return std::make_unique<InstrumentManager<I>>(*this);
     }
 
     void clone_instrument(I& instrument)

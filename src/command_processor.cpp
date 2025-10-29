@@ -8,7 +8,7 @@ namespace MusicLib {
 
 CommandProcessorBasic::CommandProcessorBasic()
 : m_cmd_stream_handler{}
-, m_dev_mgr_handler{}
+, m_device_handler{}
 , m_time_handler{}
 {
 
@@ -19,9 +19,9 @@ void CommandProcessorBasic::handle_command_stream(Command& cmd, CommandStream& c
     m_cmd_stream_handler(cmd, cmd_stream);
 }
 
-void CommandProcessorBasic::handle_device_manager(Command& cmd, DeviceManager& dev_mgr) 
+void CommandProcessorBasic::handle_device(Command& cmd, Device& dev_mgr) 
 {
-    m_dev_mgr_handler(cmd, dev_mgr);
+    m_device_handler(cmd, dev_mgr);
 }
 
 void CommandProcessorBasic::handle_time_manager(Command& cmd, TimeManager& time_mgr)

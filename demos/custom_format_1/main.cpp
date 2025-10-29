@@ -294,7 +294,7 @@ int main(int argc, char *argv[])
 
     MusicLib::CommandProcessorBasic cmd_processor;
     cmd_processor.set_command_stream_handler<CommandDemo, MusicLib::CommandStreamBasic>(handle_command_stream);
-    cmd_processor.set_device_manager_handler<CommandDemo, InsMgrDemo>(handle_instrument_manager);
+    cmd_processor.set_device_handler<CommandDemo, InsMgrDemo>(handle_instrument_manager);
     cmd_processor.set_time_handler<CommandDemo, MusicLib::TimeManagerEventBased>(handle_time_manager);
 
     InsMgrDemo ins_mgr{BUFFER_SIZE};

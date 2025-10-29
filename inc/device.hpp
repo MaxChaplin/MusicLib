@@ -33,6 +33,20 @@ public:
     virtual void process(float sample_duration, float& out_left, float& out_right) = 0;
 };
 
+
+/**
+ * @brief A device that has one stereo input and one stereo output.
+ * 
+ */
+class DeviceInOut : public Device
+{
+public:
+    DeviceInOut() = default;
+    virtual ~DeviceInOut() = default;
+
+    virtual void process(float sample_duration, float& in_left, float& in_right, float& out_left, float& out_right) = 0;
+};
+
 }
 
 #endif // DEVICE_H_

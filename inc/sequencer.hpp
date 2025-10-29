@@ -87,7 +87,7 @@ class SequencerBasic : public Sequencer
 {
 public:
     explicit SequencerBasic(TimeManager& time_mgr,
-        DeviceManager& dev_mgr,
+        Device& device,
         CommandStream& cmd_stream,
         CommandProcessor& cmd_processor);
     ~SequencerBasic() noexcept = default;
@@ -106,7 +106,7 @@ public:
 private:
     TimeManager& m_time_mgr;
     CommandStream& m_cmd_stream;
-    std::reference_wrapper<DeviceManager> m_dev_mgr;
+    std::reference_wrapper<Device> m_device;
     CommandProcessor& m_cmd_processor;
 };
 
@@ -117,7 +117,7 @@ private:
 class SequencerMultiChannel : public Sequencer
 {
 public:
-    explicit SequencerMultiChannel(TimeManager& time_mgr, DeviceManager& dev_mgr,
+    explicit SequencerMultiChannel(TimeManager& time_mgr, Device& device,
         std::vector<CommandStream>& cmd_streams, CommandProcessor& cmd_processor);
     ~SequencerMultiChannel() noexcept = default;
 
@@ -138,7 +138,7 @@ public:
 private:
     TimeManager& m_time_mgr;
     std::vector<CommandStream>& m_cmd_streams;
-    std::reference_wrapper<DeviceManager> m_dev_mgr;
+    std::reference_wrapper<Device> m_device;
     CommandProcessor& m_cmd_processor;
 };
 

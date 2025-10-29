@@ -1,4 +1,5 @@
 #include "audio_manager_portaudio.hpp"
+#include "device.hpp"
 
 #include <portaudio.h>
 #include <iostream>
@@ -14,12 +15,12 @@ static int portaudio_out_callback(const void *inputBuffer [[maybe_unused]],
     float *out = (float*) outputBuffer;
     auto *data = (PortAudioDataOut*) userData;
     auto& seq = data->seq;
-    auto& dev_mgr = data->dev_mgr;
+    auto& device = data->device;
 
     // Write interleaved audio data.
     for(size_t i = 0; i < framesPerBuffer; i++)
     {
-        dev_mgr.process(data->sample_duration, *out, *(out+1));
+        device.process(data->sample_duration, *out, *(out+1));
         out += 2;
         seq.tick();
     }
@@ -36,12 +37,12 @@ static int portaudio_in_out_callback(const void *inputBuffer [[maybe_unused]],
     float *out = (float*) outputBuffer;
     auto *data = (PortAudioDataInOut*) userData;
     auto& seq = data->seq;
-    auto& dev_mgr = data->dev_mgr;
+    auto& device = data->device;
 
     // Write interleaved audio data.
     for(size_t i = 0; i < framesPerBuffer; i++)
     {
-        dev_mgr.process(data->sample_duration, *in, *(in+1), *out, *(out+1));
+        device.process(data->sample_duration, *in, *(in+1), *out, *(out+1));
         out += 2;
         seq.tick();
     }
@@ -49,17 +50,17 @@ static int portaudio_in_out_callback(const void *inputBuffer [[maybe_unused]],
     return 0;
 }
 
-PortAudioDataOut::PortAudioDataOut(Sequencer& seq_, DeviceManagerOut& dev_mgr_, float sample_duration_)
+PortAudioDataOut::PortAudioDataOut(Sequencer& seq_, DeviceOut& device_, float sample_duration_)
 : seq{seq_}
-, dev_mgr{dev_mgr_}
+, device{device_}
 , sample_duration{sample_duration_}
 {
 
 }
 
-PortAudioDataInOut::PortAudioDataInOut(Sequencer& seq_, DeviceManagerInOut& dev_mgr_, float sample_duration_)
+PortAudioDataInOut::PortAudioDataInOut(Sequencer& seq_, DeviceInOut& device_, float sample_duration_)
 : seq{seq_}
-, dev_mgr{dev_mgr_}
+, device{device_}
 , sample_duration{sample_duration_}
 {
 

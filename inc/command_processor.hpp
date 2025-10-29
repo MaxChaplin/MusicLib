@@ -2,7 +2,7 @@
 #define COMMAND_PROCESSOR_H_
 
 #include "command_stream.hpp"
-#include "device_manager.hpp"
+#include "device.hpp"
 #include "time_manager.hpp"
 
 #include <memory>
@@ -23,7 +23,7 @@ public:
     virtual ~CommandProcessor() = default;
 
     virtual void handle_command_stream(Command& cmd, CommandStream& cmd_stream) = 0;
-    virtual void handle_device_manager(Command& cmd, DeviceManager& dev_mgr) = 0;
+    virtual void handle_device(Command& cmd, Device& device) = 0;
     virtual void handle_time_manager(Command& cmd, TimeManager& time_mgr) = 0;
 };
 
@@ -43,7 +43,7 @@ public:
     ~CommandProcessorBasic() noexcept = default;
 
     void handle_command_stream(Command& cmd, CommandStream& cmd_stream) override;
-    void handle_device_manager(Command& cmd, DeviceManager& dev_mgr) override;
+    void handle_device(Command& cmd, Device& device) override;
     void handle_time_manager(Command& cmd, TimeManager& time_mgr) override;
 
     template <typename C, typename CS>
@@ -58,13 +58,13 @@ public:
     }
 
     template <typename C, typename DM>
-    void set_device_manager_handler(std::function<void(C&, DM&)> dev_mgr_handler)
+    void set_device_handler(std::function<void(C&, DM&)> device_handler)
     {
-        m_dev_mgr_handler = [dev_mgr_handler](Command& cmd, DeviceManager& dev_mgr)
+        m_device_handler = [device_handler](Command& cmd, Device& device)
         {
             auto& cmd_cast = static_cast<C&>(cmd);
-            auto& dev_mgr_cast = static_cast<DM&>(dev_mgr);
-            dev_mgr_handler(cmd_cast, dev_mgr_cast);
+            auto& device_cast = static_cast<DM&>(device);
+            device_handler(cmd_cast, device_cast);
         };
     }
 
@@ -81,7 +81,7 @@ public:
 
 private:
     std::function<void(Command&, CommandStream&)> m_cmd_stream_handler;
-    std::function<void(Command&, DeviceManager&)> m_dev_mgr_handler;
+    std::function<void(Command&, Device&)> m_device_handler;
     std::function<void(Command&, TimeManager&)> m_time_handler;
 };
 

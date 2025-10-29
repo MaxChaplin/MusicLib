@@ -2,7 +2,7 @@
 #define AUDIO_MANAGER_PORTAUDIO_H_
 
 #include "audio_manager.hpp"
-#include "device_manager.hpp"
+#include "device.hpp"
 #include "sequencer.hpp"
 
 #include <portaudio.h>
@@ -17,19 +17,19 @@ struct PortAudioData
 
 struct PortAudioDataOut : public PortAudioData
 {
-    PortAudioDataOut(Sequencer& seq, DeviceManagerOut& dev_mgr, float sample_duration);
+    PortAudioDataOut(Sequencer& seq, DeviceOut& device, float sample_duration);
 
     Sequencer& seq;
-    DeviceManagerOut& dev_mgr;
+    DeviceOut& device;
     float sample_duration;
 };
 
 struct PortAudioDataInOut : public PortAudioData
 {
-    PortAudioDataInOut(Sequencer& seq, DeviceManagerInOut& dev_mgr, float sample_duration);
+    PortAudioDataInOut(Sequencer& seq, DeviceInOut& device, float sample_duration);
 
     Sequencer& seq;
-    DeviceManagerInOut& dev_mgr;
+    DeviceInOut& device;
     float sample_duration;
 };
 

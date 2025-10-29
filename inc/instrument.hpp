@@ -24,8 +24,6 @@ public:
 
     virtual void pan(float pan) = 0;
     virtual float pan() const = 0;
-
-    virtual void retrigger(bool retrigger) = 0;
 };
 
 /**
@@ -37,11 +35,10 @@ template <typename V = Voice>
 class InstrumentMono : public Instrument
 {
 public:
-    explicit InstrumentMono(V& voice, float vol = 1, float pan = .5, bool retrigger = false)
+    explicit InstrumentMono(V& voice, float vol = 1, float pan = .5)
     : m_voice{Util::clone<V>(voice)}
     , m_vol{vol}
     , m_pan{pan}
-    , m_retrigger{retrigger}
     {}
 
     ~InstrumentMono() noexcept = default;
@@ -50,7 +47,6 @@ public:
     : m_voice{Util::clone<V>(*other.m_voice)}
     , m_vol{other.m_vol}
     , m_pan{other.m_pan}
-    , m_retrigger{other.m_retrigger}
     {
 
     }
@@ -62,7 +58,6 @@ public:
             m_voice = Util::clone<V>(*other.m_voice);
             m_vol = other.m_vol;
             m_pan = other.m_pan;
-            m_retrigger = other.m_retrigger;
         }
         return *this;
     }
@@ -130,11 +125,6 @@ public:
         return m_pan;
     }
 
-    void retrigger(bool retrigger) override
-    {
-        m_retrigger = retrigger;
-    }
-
     template <typename V2 = V>
     V2& voice()
     {
@@ -151,7 +141,6 @@ private:
     std::unique_ptr<V> m_voice;
     float m_vol;
     float m_pan;
-    bool m_retrigger;
 };
 
 /**
@@ -164,11 +153,10 @@ class InstrumentPoly : public Instrument
 {
 public:
     explicit InstrumentPoly(Voice& voice, unsigned int polyphony = 4,
-        float vol = 1, float pan = .5, bool retrigger = false)
+        float vol = 1, float pan = .5)
     : m_voices{}
     , m_vol{vol}
     , m_pan{pan}
-    , m_retrigger{retrigger}
     {
         m_voices.reserve(polyphony);
 
@@ -179,6 +167,38 @@ public:
     }
 
     ~InstrumentPoly() noexcept = default;
+
+    InstrumentPoly(const InstrumentPoly& other)
+    : m_voices{}
+    , m_vol{other.m_vol}
+    , m_pan{other.m_pan}
+    {
+        m_voices.reserve(other.m_voices.size());
+
+        for (const auto& v : other.m_voices)
+        {
+            m_voices.push_back(Util::clone<V>(*v));
+        }
+    }
+
+    InstrumentPoly& operator=(const InstrumentPoly& other)
+    {
+        if (this != &other)
+        {
+            m_voices.clear();
+            for (const auto& v : other.m_voices)
+            {
+                m_voices.push_back(Util::clone<V>(*v));
+            }
+
+            m_vol = other.m_vol;
+            m_pan = other.m_pan;
+        }
+        return *this;
+    }
+
+    InstrumentPoly(InstrumentPoly&&) noexcept = default;
+    InstrumentPoly& operator=(InstrumentPoly&&) noexcept = default;
 
     std::unique_ptr<Device> clone() const override
     {
@@ -254,11 +274,6 @@ public:
         return m_pan;
     }
 
-    void retrigger(bool retrigger) override
-    {
-        m_retrigger = retrigger;
-    }
-
     template <typename V2 = V>
     V2& voice(size_t index)
     {
@@ -292,7 +307,6 @@ private:
     std::vector<std::unique_ptr<V>> m_voices;
     float m_vol;
     float m_pan;
-    bool m_retrigger;
 };
 
 }
