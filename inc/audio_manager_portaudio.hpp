@@ -17,19 +17,19 @@ struct PortAudioData
 
 struct PortAudioDataOut : public PortAudioData
 {
-    PortAudioDataOut(Sequencer& seq, DeviceOut& device, float sample_duration);
+    PortAudioDataOut(Sequencer& seq, Device<InputNone, OutputStereo>& device, float sample_duration);
 
     Sequencer& seq;
-    DeviceOut& device;
+    Device<InputNone, OutputStereo>& device;
     float sample_duration;
 };
 
 struct PortAudioDataInOut : public PortAudioData
 {
-    PortAudioDataInOut(Sequencer& seq, DeviceInOut& device, float sample_duration);
+    PortAudioDataInOut(Sequencer& seq, Device<InputStereo, OutputStereo>& device, float sample_duration);
 
     Sequencer& seq;
-    DeviceInOut& device;
+    Device<InputStereo, OutputStereo>& device;
     float sample_duration;
 };
 

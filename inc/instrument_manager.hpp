@@ -14,22 +14,18 @@ namespace MusicLib {
  * 
  * @tparam I an implementation of the Instrument interface
  */
-template <typename I = Instrument>
-class InstrumentManager : public DeviceOut
+template <typename I = Device<InputNone, OutputStereo>>
+class InstrumentManager : public Device<InputNone, OutputStereo>
 {
 public:
-    explicit InstrumentManager(size_t buffer_size)
+    explicit InstrumentManager()
     : m_instruments{}
-    , m_buffer(buffer_size, 0)
-    , m_buffer_cursor{}
     {}
 
     ~InstrumentManager() noexcept = default;
     
     InstrumentManager(const InstrumentManager& other)
     : m_instruments{}
-    , m_buffer{other.m_buffer}
-    , m_buffer_cursor{other.m_buffer_cursor}    
     {
         m_instruments.reserve(other.m_instruments.size());
 
@@ -48,8 +44,6 @@ public:
             {
                 m_instruments.push_back(Util::clone<I>(*ins));
             }
-            m_buffer = other.m_buffer;
-            m_buffer_cursor = other.m_buffer_cursor;
         }
         return *this;
     }
@@ -81,6 +75,26 @@ public:
         m_instruments.push_back(Util::clone<I>(instrument));
     }
 
+    void vol(float vol) override
+    {
+        m_vol = vol;
+    }
+
+    float vol() const override
+    {
+        return m_vol;
+    }
+
+    void pan(float pan) override
+    {
+        m_pan = pan;
+    }
+
+    float pan() const override
+    {
+        return m_pan;
+    }
+
 
     void process(float sample_duration, float& out_left, float& out_right) override
     {
@@ -98,8 +112,8 @@ public:
 
 private:
     std::vector<std::unique_ptr<I>> m_instruments;
-    std::vector<float> m_buffer;
-    size_t m_buffer_cursor;
+    float m_vol;
+    float m_pan;
 };
 
 }

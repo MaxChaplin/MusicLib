@@ -112,7 +112,7 @@ void CommandStreamBasic::add(Command& command)
 
 
 
-CommandStreamInstrument::CommandStreamInstrument(Instrument& ins, bool looping)
+CommandStreamInstrument::CommandStreamInstrument(IInstrument& ins, bool looping)
 : m_commands{}
 , m_cursor{0}
 , m_looping{looping}
@@ -121,7 +121,7 @@ CommandStreamInstrument::CommandStreamInstrument(Instrument& ins, bool looping)
 
 }
 
-CommandStreamInstrument::CommandStreamInstrument(std::vector<std::unique_ptr<Command>>& commands, Instrument& ins, bool looping)
+CommandStreamInstrument::CommandStreamInstrument(std::vector<std::unique_ptr<Command>>& commands, IInstrument& ins, bool looping)
 : m_commands{}
 , m_cursor{0}
 , m_looping{looping}
@@ -225,12 +225,12 @@ void CommandStreamInstrument::add(Command& command)
     m_commands.push_back(command.clone());
 }
 
-void CommandStreamInstrument::instrument(Instrument& ins)
+void CommandStreamInstrument::instrument(IInstrument& ins)
 {
     m_ins = ins;
 }
 
-Instrument& CommandStreamInstrument::instrument()
+IInstrument& CommandStreamInstrument::instrument()
 {
     return m_ins;
 }

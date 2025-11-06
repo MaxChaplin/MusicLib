@@ -23,7 +23,7 @@ public:
     virtual ~CommandProcessor() = default;
 
     virtual void handle_command_stream(Command& cmd, CommandStream& cmd_stream) = 0;
-    virtual void handle_device(Command& cmd, Device& device) = 0;
+    virtual void handle_device(Command& cmd, IDevice& device) = 0;
     virtual void handle_time_manager(Command& cmd, TimeManager& time_mgr) = 0;
 };
 
@@ -43,7 +43,7 @@ public:
     ~CommandProcessorBasic() noexcept = default;
 
     void handle_command_stream(Command& cmd, CommandStream& cmd_stream) override;
-    void handle_device(Command& cmd, Device& device) override;
+    void handle_device(Command& cmd, IDevice& device) override;
     void handle_time_manager(Command& cmd, TimeManager& time_mgr) override;
 
     template <typename C, typename CS>
@@ -60,7 +60,7 @@ public:
     template <typename C, typename DM>
     void set_device_handler(std::function<void(C&, DM&)> device_handler)
     {
-        m_device_handler = [device_handler](Command& cmd, Device& device)
+        m_device_handler = [device_handler](Command& cmd, IDevice& device)
         {
             auto& cmd_cast = static_cast<C&>(cmd);
             auto& device_cast = static_cast<DM&>(device);
@@ -81,7 +81,7 @@ public:
 
 private:
     std::function<void(Command&, CommandStream&)> m_cmd_stream_handler;
-    std::function<void(Command&, Device&)> m_device_handler;
+    std::function<void(Command&, IDevice&)> m_device_handler;
     std::function<void(Command&, TimeManager&)> m_time_handler;
 };
 

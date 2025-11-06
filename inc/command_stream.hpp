@@ -7,10 +7,9 @@
 #include <functional>
 
 #include "command.hpp"
+#include "instrument.hpp"
 
 namespace MusicLib {
-
-class Instrument; // Forward declaration
 
 /**
  * @brief An interface for classes that contain an organized sequence of 
@@ -70,8 +69,8 @@ private:
 class CommandStreamInstrument : public CommandStream
 {
 public:
-    explicit CommandStreamInstrument(Instrument& ins, bool looping = false);
-    explicit CommandStreamInstrument(std::vector<std::unique_ptr<Command>>& commands, Instrument& ins, bool looping = false);
+    explicit CommandStreamInstrument(IInstrument& ins, bool looping = false);
+    explicit CommandStreamInstrument(std::vector<std::unique_ptr<Command>>& commands, IInstrument& ins, bool looping = false);
     ~CommandStreamInstrument() noexcept = default;
     CommandStreamInstrument(const CommandStreamInstrument& other);
     CommandStreamInstrument& operator=(const CommandStreamInstrument& other);
@@ -87,15 +86,15 @@ public:
     unsigned long step() override;
     void cursor(unsigned long cursor) override;
 
-    void instrument(Instrument& ins);
-    Instrument& instrument();
+    void instrument(IInstrument& ins);
+    IInstrument& instrument();
 
 private:
     std::vector<std::unique_ptr<Command>> m_commands;
     unsigned long m_cursor;
     bool m_looping;
 
-    std::reference_wrapper<Instrument> m_ins;
+    std::reference_wrapper<IInstrument> m_ins;
 };
 
 };

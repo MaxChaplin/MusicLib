@@ -37,7 +37,7 @@ void MultiSequencer::reset()
     }
 }
 
-SequencerBasic::SequencerBasic(TimeManager& time_mgr, Device& device,
+SequencerBasic::SequencerBasic(TimeManager& time_mgr, IDevice& device,
         CommandStream& cmd_stream, CommandProcessor& cmd_processor)
 : m_time_mgr{time_mgr}
 , m_cmd_stream{cmd_stream}
@@ -84,7 +84,7 @@ void SequencerBasic::reset()
     m_cmd_stream.reset();
 }
 
-SequencerMultiChannel::SequencerMultiChannel(TimeManager& time_mgr, Device& device, std::vector<CommandStream>& cmd_streams, CommandProcessor& cmd_processor)
+SequencerMultiChannel::SequencerMultiChannel(TimeManager& time_mgr, IDevice& device, std::vector<CommandStream>& cmd_streams, CommandProcessor& cmd_processor)
 : m_time_mgr{time_mgr}
 , m_cmd_streams{cmd_streams}
 , m_device{device}

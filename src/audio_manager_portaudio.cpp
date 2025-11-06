@@ -50,7 +50,7 @@ static int portaudio_in_out_callback(const void *inputBuffer [[maybe_unused]],
     return 0;
 }
 
-PortAudioDataOut::PortAudioDataOut(Sequencer& seq_, DeviceOut& device_, float sample_duration_)
+PortAudioDataOut::PortAudioDataOut(Sequencer& seq_, Device<InputNone, OutputStereo>& device_, float sample_duration_)
 : seq{seq_}
 , device{device_}
 , sample_duration{sample_duration_}
@@ -58,7 +58,7 @@ PortAudioDataOut::PortAudioDataOut(Sequencer& seq_, DeviceOut& device_, float sa
 
 }
 
-PortAudioDataInOut::PortAudioDataInOut(Sequencer& seq_, DeviceInOut& device_, float sample_duration_)
+PortAudioDataInOut::PortAudioDataInOut(Sequencer& seq_, Device<InputStereo, OutputStereo>& device_, float sample_duration_)
 : seq{seq_}
 , device{device_}
 , sample_duration{sample_duration_}

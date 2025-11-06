@@ -24,7 +24,7 @@
 
 using OscDemo = MusicLib::OscillatorSwitch<MusicLib::OscillatorBasic>;
 using VoiceDemo = MusicLib::VoiceOsc<OscDemo, MusicLib::EnvelopeADSR>;
-using InsDemo = MusicLib::InstrumentMono<VoiceDemo>;
+using InsDemo = MusicLib::Instrument<VoiceDemo, MusicLib::OutputStereo>;
 using InsMgrDemo = MusicLib::InstrumentManager<InsDemo>;
 
 /**
@@ -297,7 +297,7 @@ int main(int argc, char *argv[])
     cmd_processor.set_device_handler<CommandDemo, InsMgrDemo>(handle_instrument_manager);
     cmd_processor.set_time_handler<CommandDemo, MusicLib::TimeManagerEventBased>(handle_time_manager);
 
-    InsMgrDemo ins_mgr{BUFFER_SIZE};
+    InsMgrDemo ins_mgr{};
     MusicLib::OscillatorBasic osc_triangle(MusicLib::osc_triangle);
     MusicLib::OscillatorBasic osc_saw(MusicLib::osc_saw);
     MusicLib::OscillatorBasic osc_square(MusicLib::osc_square);

@@ -19,7 +19,7 @@ void CommandProcessorBasic::handle_command_stream(Command& cmd, CommandStream& c
     m_cmd_stream_handler(cmd, cmd_stream);
 }
 
-void CommandProcessorBasic::handle_device(Command& cmd, Device& dev_mgr) 
+void CommandProcessorBasic::handle_device(Command& cmd, IDevice& dev_mgr) 
 {
     m_device_handler(cmd, dev_mgr);
 }
