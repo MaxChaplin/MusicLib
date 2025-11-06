@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_options(-Wformat -Wall -Wextra -pedantic -Wunreachable-code -Wunused -Wunused-function)
 
+# Add MusicLib
 set(MUSICLIB_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -19,6 +20,7 @@ find_library(MUSICLIB_LIB
     PATHS ${MUSICLIB_BUILD}
 )
 
+# Create executable
 file(GLOB SRC "*.cpp")
 add_executable(demo ${SRC})
 
